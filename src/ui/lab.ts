@@ -476,11 +476,17 @@ export function buildLab(
     el('div', { class: 'lab-rail-tools' }, [viewSwitch.root, resetLab, copyTranscript]),
   ]);
 
+  // THE LIMITS SIT AT THE END, NOT THE FRONT. They are a closing caveat about
+  // everything above them, and every pixel between the top of the page and the
+  // first thing a visitor can DO is a pixel spent on throat-clearing. The
+  // transcript host stays here, next to the button that fills it, and is empty
+  // until it is pressed.
   const root = el('div', { class: 'lab' }, [
     rail,
     live.root,
-    el('div', { class: 'lab-preamble' }, [evidenceLimits, transcriptHost]),
+    el('div', { class: 'lab-preamble' }, [transcriptHost]),
     stepsHost,
+    evidenceLimits,
     closing,
   ]);
 

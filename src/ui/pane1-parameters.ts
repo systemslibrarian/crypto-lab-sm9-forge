@@ -321,13 +321,14 @@ export function buildPane1(host: ExhibitHost): Exhibit {
     'p1-pane',
   );
 
+  // ONE SENTENCE BEFORE THE BUTTON. The framing this pane needs is real and it is
+  // all still here — it just comes after the run, beside the result it is about,
+  // because prose above the first control is prose a visitor scrolls past to
+  // reach the thing they came to press.
   body.appendChild(
     para(
-      'Identity-based cryptography makes a promise: your name is your public key. Nobody fetches a '
-        + 'certificate, because anybody holding the system parameters can compute a public point for '
-        + 'the string "Alice" without asking Alice. What that buys in convenience it pays for in '
-        + 'structure — somebody has to mint the matching private key, and everything H1 touches on the '
-        + 'way there is pure SM3. Check that first.',
+      'Everything downstream is arithmetic on bytes H1, H2 and the KDF produce, and all three are SM3 '
+        + 'and nothing else. Check them first.',
     ),
   );
 
@@ -434,6 +435,14 @@ export function buildPane1(host: ExhibitHost): Exhibit {
   });
 
   body.appendChild(controls([runButton, summary]));
+  body.appendChild(
+    para(
+      'Identity-based cryptography makes a promise: your name is your public key. Nobody fetches a '
+        + 'certificate, because anybody holding the system parameters can compute a public point for '
+        + 'the string "Alice" without asking Alice. What that buys in convenience it pays for in '
+        + 'structure — somebody has to mint the matching private key, which is what step 2 does.',
+    ),
+  );
   body.appendChild(
     note(
       [
