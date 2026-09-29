@@ -12,7 +12,16 @@
   --bg-raised: #161923;
   --bg-sunken: #0a0c11;
   --border: #2b3040;
-  --border-strong: #3d4459;
+  /* --border-strong is the BOUNDARY of every form control: the outline of each
+     text input and select, and the only thing that distinguishes a secondary
+     button from the prose beside it. WCAG 1.4.11 wants 3:1 for that, and axe
+     implements no rule for 1.4.11 at all, so nothing was measuring it. The
+     oracle in e2e/a11y.spec.ts does: the previous #3d4459 came out at 1.81:1
+     against --bg-raised and 2.02:1 against --bg-sunken. This value measures
+     3.56:1 and 3.93:1 against the same two grounds. --border stays as it was;
+     it edges panes, hex blocks and table rules, which are decoration rather
+     than an affordance and carry no 1.4.11 requirement. */
+  --border-strong: #636f91;
 
   --text: #e8eaf2;
   --text-dim: #b9bfd0;
@@ -212,7 +221,7 @@ button.danger {
   background: var(--alarm);
 }
 
-label { display: inline-flex; flex-direction: column; gap: 0.25rem; font-size: 0.85rem; color: var(--text-dim); }
+label { display: inline-flex; flex-direction: column; gap: 0.25rem; font-size: 0.85rem; color: var(--text-dim); min-width: 0; max-width: 100%; }
 input[type="text"], select, textarea {
   font: inherit;
   color: var(--text);
@@ -221,13 +230,22 @@ input[type="text"], select, textarea {
   border-radius: 6px;
   padding: 0.45rem 0.6rem;
   min-width: 0;
+  /* A <select> sizes itself to its longest OPTION and will not wrap. The hid
+     control's longest option renders 365px wide, which pushed a 380px viewport
+     20px past its own edge - a WCAG 1.4.10 reflow failure that e2e/a11y.spec.ts
+     measures. Capping at the label's width lets the browser ellipsise the
+     option text rather than widening the page. */
+  max-width: 100%;
 }
 input[type="text"]:focus-visible, select:focus-visible, textarea:focus-visible {
   outline: 3px solid var(--info);
   outline-offset: 1px;
 }
 .controls { display: flex; flex-wrap: wrap; gap: 0.9rem; align-items: flex-end; margin-bottom: 1rem; }
-.controls > * { flex: 0 1 auto; }
+/* min-width: 0 so a control whose intrinsic width exceeds a phone viewport can
+   actually shrink - without it flexbox floors every item at its min-content
+   width and the row overflows instead of wrapping. */
+.controls > * { flex: 0 1 auto; min-width: 0; max-width: 100%; }
 
 /* ---------- status: icon + text + colour, never colour alone ---------- */
 
@@ -270,9 +288,23 @@ input[type="text"]:focus-visible, select:focus-visible, textarea:focus-visible {
 
 /* ---------- values ---------- */
 
-.kv { display: grid; grid-template-columns: minmax(7rem, max-content) 1fr; gap: 0.35rem 0.9rem; margin: 0.6rem 0; }
-.kv dt { color: var(--text-muted); font-size: 0.84rem; }
+/* fit-content(40%), not max-content. A term like "decrypted plaintext (from the
+   decryption, not the input)" sizes a max-content track wider than a phone
+   viewport, which pushed the value column past the pane - and .pane carries
+   overflow: hidden for its rounded corners, so the value was CLIPPED rather
+   than scrolled: gone, not merely off-screen, with documentElement.scrollWidth
+   still reading a clean 380. Capping the term column makes the term wrap
+   instead. e2e/a11y.spec.ts measures this per element for that reason. */
+.kv { display: grid; grid-template-columns: fit-content(40%) 1fr; gap: 0.35rem 0.9rem; margin: 0.6rem 0; }
+.kv dt { color: var(--text-muted); font-size: 0.84rem; min-width: 0; overflow-wrap: anywhere; }
 .kv dd { margin: 0; min-width: 0; }
+
+/* Below this width 40% of the container is too little for either side, so the
+   term goes above its value rather than beside it. */
+@media (max-width: 560px) {
+  .kv { grid-template-columns: 1fr; gap: 0.1rem 0; }
+  .kv dd { margin-bottom: 0.5rem; }
+}
 
 .hex {
   display: block;
