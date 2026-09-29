@@ -4,9 +4,24 @@
    status carries an icon glyph and a word as well (WCAG 1.4.1). */
 
 :root {
-  /* --accent is PROVISIONAL. The catalog assigns accents centrally so that
-     neighbouring cards differ; this value may be changed there. */
-  --accent: #9f88ff;
+  /* Assigned centrally 2026-09-29 from the catalog's four-colour rotation.
+     The rule is that NEIGHBOURING cards differ, and neighbouring is a 2-D
+     question: the catalog grid is 4 columns (`.content .wrap`,
+     grid-template-columns: repeat(4, minmax(0,1fr)); `.project-grid` is
+     display:contents), and a section header spans the full row, so each section
+     restarts at column 1. This lab is card 24 of the public-key section, which
+     puts it at column 4 of the final row:
+         Token Tell (teal) | Rekey Relay (crimson) | Attribute Gate (violet) | HERE
+     with Signed Bytes (violet) directly above it.
+     Amber is the only one of the four that differs from all of those, and it
+     leaves that row carrying each palette colour exactly once. The nearest other
+     amber, Bitcoin Wallet, is two columns left and a row up -- not adjacent.
+     Two earlier picks were wrong and are recorded so the reasoning is not
+     repeated: #9f88ff (the build-time placeholder) matches BOTH the card to the
+     left and the card above, and #ff6b7f matches Rekey Relay in the same row.
+     Both were chosen from document order alone, which is not what adjacency
+     means here. */
+  --accent: #ffb84d;
 
   --bg: #0e1016;
   --bg-raised: #161923;
