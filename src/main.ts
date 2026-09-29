@@ -1,6 +1,15 @@
 /**
- * Mounts the five exhibits into the shell's #panes, in order, plus the security
+ * Mounts the five exhibits as the five steps of one guided lab, plus the security
  * level note that closes the page.
+ *
+ * THE ORDER IS AN ARGUMENT, NOT A LAYOUT. SM3 first because it is the cheapest
+ * honest check and everything downstream is arithmetic on its output; extraction
+ * second because it is the mechanism the whole scheme turns on; the protocols
+ * third because they are what the mechanism is for; the KGC's two powers fourth
+ * because they follow from the mechanism rather than from any protocol; and the
+ * break last because it is the only exhibit that needs a mistake rather than a
+ * design. src/ui/lab.ts gates them in that order and explains why it gates
+ * anything at all.
  *
  * WHY THE SECURITY NOTE IS A RANGE AND NOT A NUMBER. SM9's BN256 curve has two
  * published post-exTNFS estimates and they do not agree. Picking one and
@@ -18,7 +27,9 @@ import { buildPane2 } from './ui/pane2-extraction';
 import { buildPane3 } from './ui/pane3-protocols';
 import { buildPane4 } from './ui/pane4-escrow';
 import { buildPane5 } from './ui/pane5-break';
-import { el, heading, note, pane, para, tableEl } from './ui/dom';
+import { buildLab } from './ui/lab';
+import type { StepSpec } from './ui/lab';
+import { detailsEl, el, heading, note, pane, para, tableEl } from './ui/dom';
 
 const PAIRING_GATE = 'https://systemslibrarian.github.io/crypto-lab-pairing-gate/';
 
@@ -127,14 +138,132 @@ function buildSecurityLevelNote(): HTMLElement {
   return root;
 }
 
+/**
+ * The limits of this lab's own verification, inside the lab.
+ *
+ * These were in the README and nowhere on the page, which is the wrong way round:
+ * the reader who most needs them is the one looking at a screen of green badges,
+ * and they are not reading the repository. Each line names a specific thing that
+ * was NOT established, because "this is a teaching demo" is a disclaimer and
+ * these are facts.
+ */
+function buildEvidenceLimits(): HTMLElement {
+  return detailsEl(
+    'Evidence and limits — what this lab did not establish',
+    [
+      para(
+        'Everything on this page is computed in the browser and compared against values printed in '
+          + 'GM/T 0044.5 or produced by implementations sharing no code with this one. That is a real '
+          + 'standard of evidence and it has edges. These are the edges.',
+      ),
+      el('ul', { class: 'limits' }, [
+        el('li', {}, [
+          el('strong', { text: 'The Fp12 pairing values rest on one engine. ' }),
+          'Three implementations agree on every non-pairing value, but g, w, u and w′ are the '
+            + 'standard\'s printed values agreeing with one runtime pairing engine — not two '
+            + 'independent pairing engines agreeing with each other. No second browser-capable SM9 '
+            + 'pairing implementation exists to close this.',
+        ]),
+        el('li', {}, [
+          el('strong', { text: 'No constant-time property is claimed or tested. ' }),
+          'This is ordinary JavaScript over BigInt. Nothing here is hardened against timing analysis '
+            + 'and nothing here measures it.',
+        ]),
+        el('li', {}, [
+          el('strong', { text: 'GB/T 41389-2022 has not been read. ' }),
+          'It is reportedly where the hid = 1 / hid = 3 convention is actually pinned, which makes it '
+            + 'the most load-bearing document for the hid question in step 5. It is cited as unread '
+            + 'rather than summarised second-hand.',
+        ]),
+        el('li', {}, [
+          el('strong', { text: 'ISO/IEC 14888-3:2018 clause 7.4\'s body is paywalled. ' }),
+          'The mechanism is named "Chinese IBS" in the publicly readable front matter, which never '
+            + 'uses the string "SM9". That the body matches GM/T 0044.2 step for step is not verified '
+            + 'here.',
+        ]),
+        el('li', {}, [
+          el('strong', { text: 'The hid 0x02 attributions were read, not inherited. ' }),
+          'GmSSL, emmansun/gmsm and Bouncy Castle were each checked in source. Bouncy Castle declares ',
+          el('code', { class: 'path', text: 'HID_EXCHANGE = (byte)0x02' }),
+          ' in ',
+          // A 90-character path with no break opportunity in it, which at 380px
+          // pushed the whole document 351px wider than the viewport. `.path`
+          // carries overflow-wrap: anywhere for exactly this.
+          el('code', {
+            class: 'path',
+            text: 'core/src/main/java/org/bouncycastle/crypto/params/SM9EncMasterPrivateKeyParameters.java',
+          }),
+          ', and its own comment attributes the value to the Chinese edition of the GM/T 0044.5-2016 '
+            + 'Annex B worked example, noting that the official English edition of the same annex chose '
+            + '0x03. That last attribution is Bouncy Castle\'s claim about the two editions, quoted '
+            + 'here, not this lab\'s finding.',
+        ]),
+        el('li', {}, [
+          el('strong', { text: 'A round trip is not a conformance check, and this lab says so twice. ' }),
+          'Step 2\'s two-state experiment and step 3\'s act (a) both demonstrate it live: extraction '
+            + 'and verification agreeing on a wrong identity map is indistinguishable from both being '
+            + 'right. Only the pinned annex intermediates catch it.',
+        ]),
+      ]),
+      para(
+        'Nothing on this page is production cryptography, and no key material leaves it or is stored '
+          + 'anywhere — including the progress of the run itself, which lives only in memory and is '
+          + 'gone on reload.',
+      ),
+    ],
+    'lab-limits',
+  );
+}
+
+const STEPS: StepSpec[] = [
+  {
+    id: 'sm3',
+    short: 'SM3',
+    action: 'run the SM3 layer against the standard\'s own vectors',
+    unlocks: 'This step is locked until step 1 reproduces the SM3 layer. That is not ceremony: H1, H2 '
+      + 'and the KDF are what every value downstream is computed from, so a lab that let you extract a '
+      + 'key before checking them would be inviting you to trust arithmetic over bytes nobody had '
+      + 'verified.',
+    build: buildPane1,
+  },
+  {
+    id: 'extract',
+    short: 'Extract',
+    action: 'extract an identity key, and watch the inversion',
+    unlocks: 'Locked until step 1 reproduces the SM3 layer. H1 is the first line of the relation this '
+      + 'step performs; checking it afterwards would be checking it too late.',
+    build: buildPane2,
+  },
+  {
+    id: 'protocols',
+    short: 'Protocols',
+    action: 'sign, exchange and encrypt against the annexes',
+    unlocks: 'Locked until step 2 issues a key. All three protocols run on a key the KGC extracted, so '
+      + 'there is nothing for them to run on until one exists.',
+    build: buildPane3,
+  },
+  {
+    id: 'kgc',
+    short: 'KGC',
+    action: 'see what the KGC can do with the same two lines',
+    unlocks: 'Locked until step 3 reproduces Annex A. The two powers below are the same verifier and '
+      + 'the same decryption accepting the KGC\'s work, and they mean nothing until you have seen that '
+      + 'verifier accept a genuine signature first.',
+    build: buildPane4,
+  },
+  {
+    id: 'break',
+    short: 'Break',
+    action: 'recover a key from a reused nonce, and meet the divergence',
+    unlocks: 'Locked until step 4 has shown both of the KGC\'s powers. This step is the only one that '
+      + 'needs an implementation mistake rather than a design property, and the contrast is the point.',
+    build: buildPane5,
+  },
+];
+
 const host = document.getElementById('panes');
 if (host === null) {
   throw new Error('main.ts: index.html is missing its #panes mount point');
 }
 
-host.appendChild(buildPane1());
-host.appendChild(buildPane2());
-host.appendChild(buildPane3());
-host.appendChild(buildPane4());
-host.appendChild(buildPane5());
-host.appendChild(buildSecurityLevelNote());
+host.appendChild(buildLab(STEPS, buildEvidenceLimits(), buildSecurityLevelNote()));

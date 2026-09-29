@@ -46,10 +46,15 @@ page.
    H1, H2 and the KDF reproduced against the standard's own printed sub-values **with
    no pairing running**. A deliberately wrong negative control runs beside them and
    must be reported as a mismatch.
-2. **Extraction — the inversion** — the headline. The extraction rendered term by
-   term, with Boneh-Franklin's multiplication drawn beside it for contrast, the two
-   master key pairs shown in their mirrored groups, and a control that drives the
-   `t1 = 0` branch the standard defines and almost nothing ever reaches.
+2. **Extraction — the inversion** — the headline. The five lines of the relation are
+   painted before anything is computed and fill one operation at a time when you press
+   Extract. A two-state control then asks the same five questions under SM9's own H1 and
+   under an altered identity map: the key differs, the annex's pinned intermediates stop
+   matching and the real verifier refuses — while the cancellation identity still holds
+   and a verifier using the same altered map still accepts. Boneh-Franklin's
+   multiplication is drawn beside it for contrast, the two master key pairs are shown in
+   their mirrored groups, and a control drives the `t1 = 0` branch the standard defines
+   and almost nothing ever reaches.
 3. **The three protocols** — sign/verify against Annex A, key exchange against
    Annex B, and KEM/encryption against Annexes C and D, each beside its pinned vector
    with a byte-equality badge. Signing with the annex's pinned nonce is
@@ -60,6 +65,44 @@ page.
 5. **The break, and the divergence** — a reused nonce recovers the private key and
    forges with it, and Annex B runs at both `hid` values from one master key, reaching
    two different session keys that are labelled by source rather than ranked.
+
+## How the Lab Is Sequenced
+
+The five exhibits are **five gated steps**, not five panels on a page. A step unlocks
+when the step before it has produced a real result — not when its button was pressed,
+which is a different claim — so the SM3 layer is reproduced before a key is extracted,
+and a key exists before any protocol runs on it. Completed steps collapse to the one
+line they earned, with a control to reopen them, and a sticky rail carries anchors
+(`#step-sm3`, `#step-extract`, `#step-protocols`, `#step-kgc`, `#step-break`) so a
+presenter can jump to an act without scrolling through the audit trail.
+
+Nothing is computed that the visitor did not cause. The page used to open with pane 1
+saying *pending — not yet run* directly above pane 2 saying *ds_A issued*: the headline
+act had already happened and nobody had pressed anything.
+
+**Guided** is the default. **Full evidence** unlocks and expands everything at once and
+is one control away at the top — progressive disclosure that cannot be switched off is
+just material hidden from the people most likely to check it. Neither view persists:
+progress lives in memory and a reload is a full reset, deliberately, because a restored
+half-run would be restoring verdicts about inputs the reader can no longer see.
+
+**Copy run transcript** exports the run as JSON — inputs, verdicts, status words,
+source labels and computed values — read off the rendered page rather than assembled
+beside it, so it cannot disagree with what the page claimed.
+
+### The five-minute path
+
+1. **Run the SM3 checks.** Published vectors reproduced, the negative control reported
+   as a mismatch, and zero pairings.
+2. **Extract Alice.** Watch `ID‖hid → h1 → t1 → t1⁻¹ → t2 → ds_A` fill one operation at
+   a time.
+3. **Switch the identity map to an altered H1.** Same five questions; three answers
+   change and two do not, and the two that hold are exactly what a round trip can check
+   about itself.
+4. **Run the KGC's two powers.** It reads a message encrypted to an identity it does
+   not hold, and signs as that identity.
+5. **Reuse a nonce.** Recover the private key point and forge a third message through
+   the real verifier, then meet the `hid` divergence beside it.
 
 ## When to Use It
 
@@ -117,7 +160,7 @@ makes the same mistake and recovers a scalar `d`; the difference is not the atta
 is what a private key is.
 
 **`hid = 0x02` and `hid = 0x03` do not interoperate.** GM/T 0044.5 Annex B declares
-`0x03` and reaches `SK = 68b20d30…`; GmSSL, `emmansun/gmsm` and (reportedly) Bouncy
+`0x03` and reaches `SK = 68b20d30…`; GmSSL, `emmansun/gmsm` and Bouncy
 Castle use `0x02` for key exchange and reach `SK = c5c13a8f…`. Both are internally
 consistent. The normative text pins no value at all — clause 5.3 says only that the
 KGC "selects a one-byte identifier hid and makes it public".
@@ -148,8 +191,15 @@ npm run dev
 
 `npm test` runs the unit suite, the known-answer tests and the CSP hash guard.
 `npm run test:oracle` runs the independent cross-check. `npm run test:e2e` runs the
-claims suite and `npm run test:a11y` the accessibility gate; both need
-`npx playwright install chromium` first.
+claims suite, `npm run test:a11y` the accessibility gate and `npm run test:geometry`
+the visual-quality gate; all three need `npx playwright install chromium` first.
+
+The browser gates build first and serve the production build on **port 4646**, which is
+this lab's own rather than Vite's default 4173. That is not a preference: several labs
+in this fleet kept the default, and `reuseExistingServer` then hands the suites whatever
+is already answering on it — a cold run here was silently judged against
+`crypto-lab-glass-box` until the port was changed. All three places that name it
+(`use.baseURL`, `webServer.command`, `webServer.url`) live in `playwright.config.ts`.
 
 ## Related Demos
 
@@ -164,9 +214,18 @@ claims suite and `npm run test:a11y` the accessibility gate; both need
 
 ## Build & Verify
 
-**419 unit tests, 28 rendered-verdict claims tests, and a 26-test independent
-cross-check.** The accessibility gate scans the production build at 1280px and 380px
-across 14 driven states each and blocks the deploy on any WCAG 2.1 A/AA violation.
+**419 unit tests, 35 rendered-verdict claims tests, a 26-test independent cross-check
+and a 5-test geometry gate.** The accessibility gate scans the production build at
+1280px and 380px across 20 driven states each — the guided path a visitor actually
+walks, including the locked, collapsed and Full-evidence renderings — and blocks the
+deploy on any WCAG 2.1 A/AA violation.
+
+**The geometry gate is the one axe cannot run.** It measures the landing page's height,
+where the first meaningful action sits in the viewport, the hero's stacked gap at phone
+width, and the painted size of every text run. It exists because the two pane-2 SVG
+diagrams passed the accessibility gate while rendering their labels at roughly five CSS
+pixels on a phone: the contrast oracle measured them correctly, and contrast is not
+legibility. Both diagrams are HTML now, and the rule that caught them is a test.
 
 **Known-answer tests.** Every figure comes from GM/T 0044.5, fetched directly from
 gmbz.org.cn (`md5 40cee7ca9ab2b885dee2158b2d4a12cc`) and pinned in
@@ -210,8 +269,15 @@ that have no C vector.
 - **ISO/IEC 14888-3:2018's clause 7.4 body is paywalled.** The mechanism is named
   "Chinese IBS" in the publicly readable front matter, which never uses the string
   "SM9"; that the body matches GM/T 0044.2 step for step is not verified here.
-- **The Bouncy Castle `hid = 0x02` claim is second-hand.** GmSSL and `emmansun/gmsm`
-  were read directly; Bouncy Castle was not.
+- **The `hid = 0x02` attributions were read, not inherited.** GmSSL, `emmansun/gmsm`
+  and Bouncy Castle were each checked in source. Bouncy Castle declares
+  `HID_EXCHANGE = (byte)0x02` in
+  `core/src/main/java/org/bouncycastle/crypto/params/SM9EncMasterPrivateKeyParameters.java`,
+  and its own comment there attributes the value to the Chinese edition of the
+  GM/T 0044.5-2016 Annex B worked example, noting the official English edition of the
+  same annex chose `0x03`. **That last attribution is Bouncy Castle's claim about the
+  two editions, quoted rather than confirmed here** — this lab has not compared the two
+  editions itself, and says so on the page.
 
 ### A note on npm packages claiming SM9
 
@@ -240,6 +306,10 @@ Menezes, Sarkar and Singh give *"a conservative estimate … is 110 bits"*
 ([ePrint 2016/1102](https://eprint.iacr.org/2016/1102), Remark 6); Barbulescu and
 Duquesne, arguing the former is not precise enough, give *"in fact 100 bits"*. Neither
 is this lab's own measurement.
+
+## License
+
+MIT — see [LICENSE](LICENSE).
 
 ---
 

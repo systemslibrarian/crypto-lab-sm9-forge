@@ -82,7 +82,14 @@ export const P2 = {
  *
  * SIGN and ENCRYPT below are those annex values. EXCHANGE_GMSSL is NOT in the
  * standard at all: GmSSL, emmansun/gmsm and Bouncy Castle use 0x02 for key
- * exchange and reach a different session key from the same master key. Both are
+ * exchange and reach a different session key from the same master key. All three
+ * were read in source rather than taken on report — Bouncy Castle declares
+ * `HID_EXCHANGE = (byte)0x02` in
+ * core/src/main/java/org/bouncycastle/crypto/params/SM9EncMasterPrivateKeyParameters.java,
+ * and its own comment there attributes the value to the Chinese edition of the
+ * GM/T 0044.5-2016 Annex B worked example, noting that the official English
+ * edition of the same annex chose 0x03. That last attribution is Bouncy Castle's
+ * claim about the two editions, quoted rather than confirmed here. Both bytes are
  * shipped because the divergence is an exhibit, not a bug to pick a side in.
  * See src/sm9/exchange.ts and the "hid" panel.
  */

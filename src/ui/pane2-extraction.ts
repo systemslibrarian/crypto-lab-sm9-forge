@@ -14,11 +14,23 @@
  * sees only `t2 = master · t1⁻¹` sees a formula and a reader who sees t1⁻¹ as a
  * value sees an operation.
  *
- * It is also the source of every other exhibit in this lab. t1 · t2 = master
- * for ANY h1 whatsoever, which is why pane 3 can extract with a deliberately
- * wrong H1 and still verify, why pane 5's key exchange reaches the same g1, g2
- * and g3 at two different hid values, and why the KGC in pane 4 can reissue any
- * identity's key at will.
+ * THE SYMBOLIC PATH IS PAINTED BEFORE ANY HEX EXISTS, AND THAT IS THE POINT.
+ * The five lines of the relation are on screen from the first paint with empty
+ * value slots. Pressing Extract fills them one at a time, in the order the
+ * standard performs them, so the reader watches the inversion happen rather than
+ * arriving at a finished table of 64-nibble strings. Nothing on this pane
+ * computes until the reader causes it: the pane used to run an extraction on
+ * load, which meant the headline act had already happened, unattributed, above a
+ * pane 1 that still said "not yet run".
+ *
+ * THE DECISIVE EXPERIMENT LIVES HERE, NOT THREE THOUSAND PIXELS DOWN. t1 · t2 =
+ * master for ANY h1 whatsoever, so an implementation that hashed identities
+ * wrongly but CONSISTENTLY passes every round trip it runs against itself. That
+ * used to be demonstrated in a nested act inside pane 3, separated from the
+ * relation it is about. It is now a two-state control on this pane: the same five
+ * questions are asked under SM9's real H1 and under an altered map, and the two
+ * that still say yes are exactly the two a round trip can ask about itself. That is the lab's actual thesis — a green round trip
+ * is weaker evidence than one pinned external value — and it fits in one screen.
  *
  * THE MASTER KEYS ARE THE ANNEXES' OWN. Both are read from the fixtures rather
  * than drawn at random, so that a visitor running the default settings is
@@ -28,7 +40,7 @@
  */
 import { HID, N } from '../sm9/params';
 import { inv, mul } from '../sm9/fn';
-import { bytesToHex } from '../sm9/hash';
+import { H1, bytesToHex, concatBytes, hexToBytes } from '../sm9/hash';
 import {
   encryptMasterKeyPair,
   extractEncryptKey,
@@ -38,9 +50,11 @@ import {
   signMasterKeyPair,
   toFieldHex,
 } from '../sm9/extract';
-import type { EncryptKeyOutcome, SignKeyOutcome } from '../sm9/extract';
+import type { EncryptKeyOutcome, IdentityHash, SignKeyOutcome } from '../sm9/extract';
+import { sign, verify } from '../sm9/sign';
 import annexA from '../sm9/fixtures/annexA-fixture.json';
 import annexCD from '../sm9/fixtures/sm9-annex-cd-fixtures.json';
+import type { Exhibit, ExhibitHost } from './exhibit';
 import {
   box,
   button,
@@ -50,6 +64,8 @@ import {
   detailsEl,
   el,
   equality,
+  figureEl,
+  flow,
   heading,
   hexBlock,
   hidHex,
@@ -59,13 +75,12 @@ import {
   pane,
   para,
   replace,
+  segmented,
   selectInput,
   setVerdict,
   sideBySide,
   sourceTag,
   statusPill,
-  stepList,
-  svgEl,
   tableEl,
   textInput,
   verdictSlot,
@@ -75,25 +90,51 @@ import {
 const ANNEX_KS = BigInt(`0x${annexA.signature.ks}`);
 /** GM/T 0044.5 Annexes C and D's encryption master private key. */
 const ANNEX_KE = BigInt(`0x${annexCD.annex_C_kem.master_encryption_private_key_ke}`);
+/** Annex A's message and nonce, so the round-trip rows below reproduce it exactly. */
+const ANNEX_MESSAGE = hexToBytes(annexA.signature.message.hex);
+const ANNEX_R = BigInt(`0x${annexA.signature.r}`);
 
 type Side = 'signature' | 'encryption';
+type Map1 = 'standard' | 'altered';
 
 const IBE_GATE = 'https://systemslibrarian.github.io/crypto-lab-ibe-gate/';
+
+/**
+ * The altered identity-to-scalar map: SM9's own H1 over the same bytes with one
+ * extra domain byte in front.
+ *
+ * It is a perfectly good hash. It is not SM9's, it produces a different scalar
+ * for every identity, and that is the entire content of the experiment — the
+ * arithmetic downstream neither knows nor cares which map produced h1.
+ */
+const ALTERED_H1: IdentityHash = (idWithHid) => H1(concatBytes(Uint8Array.of(0xff), idWithHid), N).h;
+
+function mapOf(which: Map1): IdentityHash | undefined {
+  return which === 'standard' ? undefined : ALTERED_H1;
+}
 
 interface Rendered {
   outcome: SignKeyOutcome | EncryptKeyOutcome;
   master: bigint;
   side: Side;
+  map: Map1;
 }
 
 function masterScalar(side: Side): bigint {
   return side === 'signature' ? ANNEX_KS : ANNEX_KE;
 }
 
-function extract(side: Side, identity: string, hid: number, master: bigint): SignKeyOutcome | EncryptKeyOutcome {
+function extract(
+  side: Side,
+  identity: string,
+  hid: number,
+  master: bigint,
+  map: Map1,
+): SignKeyOutcome | EncryptKeyOutcome {
+  const options = { hid, identityHash: mapOf(map) };
   return side === 'signature'
-    ? extractSignKey(signMasterKeyPair(master), identity, { hid })
-    : extractEncryptKey(encryptMasterKeyPair(master), identity, { hid });
+    ? extractSignKey(signMasterKeyPair(master), identity, options)
+    : extractEncryptKey(encryptMasterKeyPair(master), identity, options);
 }
 
 /** The user key as the annexes print it: x‖y for G1, and each Fq2 high-then-low for G2. */
@@ -114,7 +155,8 @@ function keyHex(outcome: SignKeyOutcome | EncryptKeyOutcome): { x: string; y: st
  *
  * Only the exact parameter set an annex prints counts: change the identity, the
  * hid or the side and there is nothing pinned to compare against, and the panel
- * says so rather than comparing against the nearest thing.
+ * says so rather than comparing against the nearest thing. An ALTERED map has no
+ * pinned row either, by construction — that is the finding, not an omission.
  */
 function annexExpectation(side: Side, identity: string, hid: number):
   | { label: string; h1: string; t1: string; t2: string; x: string; y: string }
@@ -143,148 +185,74 @@ function annexExpectation(side: Side, identity: string, hid: number):
   return undefined;
 }
 
-/** The SVG label helper — presentation attributes only, never a style attribute. */
-function svgText(x: number, y: number, text: string, size = 13, anchor = 'middle', opacity = '1'): SVGElement {
-  return svgEl(
-    'text',
-    {
-      x: String(x),
-      y: String(y),
-      'font-size': String(size),
-      'text-anchor': anchor,
-      fill: 'currentColor',
-      'fill-opacity': opacity,
-    },
-    [text],
-  );
-}
-
-function svgBox(x: number, y: number, w: number, h: number, opacity = '0.55'): SVGElement {
-  return svgEl('rect', {
-    x: String(x),
-    y: String(y),
-    width: String(w),
-    height: String(h),
-    rx: '8',
-    fill: 'none',
-    stroke: 'currentColor',
-    'stroke-opacity': opacity,
-  });
-}
-
 /**
- * The mirror: signature keys live in G1 under a G2 master public key, encryption
- * keys in G2 under a G1 master public key. The crossing dashed lines are the
- * whole message — the same group appears on opposite rows of the two sides.
+ * The mirror, as a two-by-two rather than a picture.
+ *
+ * This was an inline SVG. The thing it was carrying is a table — two key types
+ * against two roles, and the finding is that the same group name appears on
+ * opposite rows — and a table reflows onto a phone, keeps its text at the
+ * reader's own size, and needs no scale arithmetic to stay legible. See the note
+ * at the top of src/ui/dom.ts.
  */
-function mirrorDiagram(): HTMLElement {
-  const svg = svgEl(
-    'svg',
-    {
-      viewBox: '0 0 760 260',
-      width: '100%',
-      role: 'img',
-      'aria-labelledby': 'p2-mirror-title p2-mirror-desc',
-      'data-testid': 'p2-mirror-diagram',
-    },
+function mirrorTable(): HTMLElement {
+  return figureEl(
+    'The same group name appears on opposite rows: that crossing is the mirror. The scalar '
+      + 'arithmetic is identical on both sides — only the groups swap.',
     [
-      svgEl('title', { id: 'p2-mirror-title' }, ['SM9 puts the two key types in mirrored groups']),
-      svgEl('desc', { id: 'p2-mirror-desc' }, [
-        'The signature master public key is in G2 and the user signature key is in G1. '
-          + 'The encryption master public key is in G1 and the user encryption key is in G2. '
-          + 'The two sides are mirror images: the same group appears on opposite rows.',
-      ]),
-
-      svgText(190, 26, 'SIGNATURE — GM/T 0044.2 clause 5.3', 13),
-      svgText(570, 26, 'ENCRYPTION — GM/T 0044.3 clause 5.3', 13),
-
-      // master public keys
-      svgBox(30, 46, 320, 64),
-      svgText(190, 72, 'Ppub-s = [ks]P2', 15),
-      svgText(190, 96, 'master public key in G2', 12, 'middle', '0.75'),
-
-      svgBox(410, 46, 320, 64),
-      svgText(570, 72, 'Ppub-e = [ke]P1', 15),
-      svgText(570, 96, 'master public key in G1', 12, 'middle', '0.75'),
-
-      // user keys
-      svgBox(30, 176, 320, 64),
-      svgText(190, 202, 'ds_A = [t2]P1', 15),
-      svgText(190, 226, 'user key in G1', 12, 'middle', '0.75'),
-
-      svgBox(410, 176, 320, 64),
-      svgText(570, 202, 'de_B = [t2]P2', 15),
-      svgText(570, 226, 'user key in G2', 12, 'middle', '0.75'),
-
-      // the crossing that names the mirror
-      svgEl('line', {
-        x1: '350', y1: '78', x2: '410', y2: '208',
-        stroke: 'currentColor', 'stroke-opacity': '0.45', 'stroke-dasharray': '5 4',
-      }),
-      svgEl('line', {
-        x1: '350', y1: '208', x2: '410', y2: '78',
-        stroke: 'currentColor', 'stroke-opacity': '0.45', 'stroke-dasharray': '5 4',
-      }),
-      svgText(380, 140, 'same group', 11, 'middle', '0.7'),
-      svgText(380, 154, 'opposite rows', 11, 'middle', '0.7'),
-
-      svgText(380, 260, 'the scalar arithmetic is identical on both sides — only the groups swap', 12, 'middle', '0.75'),
+      tableEl(
+        ['', 'Signature — GM/T 0044.2 clause 5.3', 'Encryption — GM/T 0044.3 clause 5.3'],
+        [
+          [
+            el('span', { text: 'master public key' }),
+            el('span', { text: 'Ppub-s = [ks]P2 — in G2', testid: 'p2-mirror-master-sign' }),
+            el('span', { text: 'Ppub-e = [ke]P1 — in G1', testid: 'p2-mirror-master-encrypt' }),
+          ],
+          [
+            el('span', { text: 'user key' }),
+            el('span', { text: 'ds_A = [t2]P1 — in G1', testid: 'p2-mirror-user-sign' }),
+            el('span', { text: 'de_B = [t2]P2 — in G2', testid: 'p2-mirror-user-encrypt' }),
+          ],
+        ],
+        'p2-mirror-table',
+        'The two master key pairs and the groups their keys land in',
+      ),
     ],
+    'p2-mirror-figure',
   );
-  return el('div', {}, [svg]);
 }
 
-/** Boneh–Franklin beside SM9. Static: nothing here runs, and nothing here should. */
-function bonehFranklinDiagram(): HTMLElement {
-  const svg = svgEl(
-    'svg',
-    {
-      viewBox: '0 0 780 250',
-      width: '100%',
-      role: 'img',
-      'aria-labelledby': 'p2-bf-title p2-bf-desc',
-      'data-testid': 'p2-bf-diagram',
-    },
+/** Boneh–Franklin beside SM9, as two flows. Static: nothing here runs either scheme. */
+function bonehFranklinFlows(): HTMLElement {
+  return figureEl(
+    'Boneh-Franklin maps an identity ONTO the curve and multiplies the point by the master '
+      + 'scalar. SM9 maps it to a scalar, adds the master scalar, and inverts the sum. Both flows '
+      + 'are static text: nothing on this page runs Boneh-Franklin.',
     [
-      svgEl('title', { id: 'p2-bf-title' }, ['Boneh-Franklin hashes to a curve point; SM9 hashes to a scalar and inverts']),
-      svgEl('desc', { id: 'p2-bf-desc' }, [
-        'Boneh-Franklin maps an identity onto a curve point Q_ID and multiplies it by the master '
-          + 'scalar s to give d_ID. SM9 maps the identity and its hid byte to a scalar h1, adds the '
-          + 'master scalar, inverts the sum, and multiplies the generator by the result.',
+      sideBySide([
+        box('Boneh-Franklin (2001) — hash to a CURVE POINT, then multiply', [
+          flow(
+            [
+              { term: 'ID', hint: 'an identity string' },
+              { op: 'H1, a hash ONTO the curve', term: 'Q_ID ∈ G1', hint: 'a point on the curve' },
+              { op: '× s', term: 'd_ID = [s]Q_ID', hint: 'one scalar multiplication' },
+            ],
+            'p2-bf-flow',
+          ),
+        ], 'p2-bf-box'),
+        box('SM9 (GM/T 0044.2 clause 5.3) — hash to a SCALAR, then INVERT', [
+          flow(
+            [
+              { term: 'ID ‖ hid', hint: 'an identity plus one byte' },
+              { op: 'H1, a hash into F_N', term: 'h1 ∈ F_N', hint: 'a scalar, not a point' },
+              { op: '+ ks, then invert', term: 'ds_A = [ks·(h1+ks)⁻¹]P1', hint: 'one inversion mod N' },
+            ],
+            'p2-sm9-flow',
+          ),
+        ], 'p2-sm9-box'),
       ]),
-
-      svgText(390, 24, 'Boneh-Franklin (2001) — hash to a CURVE POINT, then multiply', 13),
-      svgBox(20, 40, 210, 56),
-      svgText(125, 64, 'ID', 15),
-      svgText(125, 84, 'an identity string', 11, 'middle', '0.7'),
-      svgEl('line', { x1: '230', y1: '68', x2: '290', y2: '68', stroke: 'currentColor', 'stroke-opacity': '0.6' }),
-      svgText(260, 58, 'H1', 11, 'middle', '0.85'),
-      svgBox(290, 40, 210, 56),
-      svgText(395, 64, 'Q_ID ∈ G1', 15),
-      svgText(395, 84, 'a point on the curve', 11, 'middle', '0.7'),
-      svgEl('line', { x1: '500', y1: '68', x2: '560', y2: '68', stroke: 'currentColor', 'stroke-opacity': '0.6' }),
-      svgText(530, 58, '× s', 11, 'middle', '0.85'),
-      svgBox(560, 40, 200, 56),
-      svgText(660, 64, 'd_ID = [s]Q_ID', 15),
-      svgText(660, 84, 'one multiplication', 11, 'middle', '0.7'),
-
-      svgText(390, 150, 'SM9 (GM/T 0044.2 clause 5.3) — hash to a SCALAR, then INVERT', 13),
-      svgBox(20, 166, 210, 56),
-      svgText(125, 190, 'ID ‖ hid', 15),
-      svgText(125, 210, 'identity plus one byte', 11, 'middle', '0.7'),
-      svgEl('line', { x1: '230', y1: '194', x2: '290', y2: '194', stroke: 'currentColor', 'stroke-opacity': '0.6' }),
-      svgText(260, 184, 'H1', 11, 'middle', '0.85'),
-      svgBox(290, 166, 210, 56),
-      svgText(395, 190, 'h1 ∈ F_N', 15),
-      svgText(395, 210, 'a scalar, not a point', 11, 'middle', '0.7'),
-      svgEl('line', { x1: '500', y1: '194', x2: '560', y2: '194', stroke: 'currentColor', 'stroke-opacity': '0.6' }),
-      svgText(530, 184, '+ ks, invert', 11, 'middle', '0.85'),
-      svgBox(560, 166, 200, 56),
-      svgText(660, 190, 'ds_A = [ks·(h1+ks)⁻¹]P1', 12),
-      svgText(660, 210, 'one inversion mod N', 11, 'middle', '0.7'),
     ],
+    'p2-bf-figure',
   );
-  return el('div', {}, [svg]);
 }
 
 function comparisonTable(): HTMLElement {
@@ -305,7 +273,7 @@ function comparisonTable(): HTMLElement {
         el('span', { text: 'consequence for this lab' }),
         el('span', { text: 'the identity survives into the key as a point' }),
         el('span', {
-          text: 't1·t2 = ks for any h1 at all, so a verifier using the SAME h1 accepts whichever one it is — see panes 3 and 5',
+          text: 't1·t2 = ks for any h1 at all, so a verifier using the SAME h1 accepts whichever one it is — see the experiment above',
         }),
       ],
     ],
@@ -314,7 +282,31 @@ function comparisonTable(): HTMLElement {
   );
 }
 
-export function buildPane2(): HTMLElement {
+/** The five lines of the relation, plus the bytes they start from. */
+interface RelationLine {
+  key: string;
+  op?: string;
+  term: string;
+  hint: string;
+}
+
+function relationLines(masterName: string, generator: string, keyName: string): RelationLine[] {
+  return [
+    { key: 'idhid', term: 'ID ‖ hid', hint: 'the identity, and the one byte naming which function issued the key' },
+    { key: 'h1', op: 'H1', term: 'h1 = H1(ID‖hid, N)', hint: 'a scalar in F_N — the curve has not been touched yet' },
+    { key: 't1', op: `+ ${masterName}`, term: `t1 = h1 + ${masterName}`, hint: 'the identity and the master secret, added' },
+    { key: 't1inv', op: 'invert mod N', term: 't1⁻¹', hint: 'the whole mechanism, as a value rather than a superscript' },
+    { key: 't2', op: `× ${masterName}`, term: `t2 = ${masterName} · t1⁻¹`, hint: 'the scalar the key is actually made of' },
+    { key: 'key', op: `[t2]${generator}`, term: `${keyName} = [t2]${generator}`, hint: 'one scalar multiplication, and the key exists' },
+  ];
+}
+
+const PENDING_SLOT = '—';
+
+/** How long the staged reveal takes per line, unless the reader asked for less motion. */
+const REVEAL_MS = 110;
+
+export function buildPane2(host: ExhibitHost): Exhibit {
   const { root, body } = pane(
     'PANE 2',
     'Extraction — the inversion',
@@ -325,9 +317,9 @@ export function buildPane2(): HTMLElement {
   body.appendChild(
     para(
       'The KGC holds a master private key. To mint a private key for the name you type below it '
-        + 'hashes that name to a scalar, adds the master key, and inverts the sum. That inversion is '
-        + 'SM9\'s whole trick and it is rendered as a step of its own, because a formula with a '
-        + 'superscript minus one in it reads as notation, and a 64-nibble value reads as an operation.',
+        + 'hashes that name to a scalar, adds the master key, and inverts the sum. The five lines of '
+        + 'that relation are already on screen; press Extract and they fill in, one operation at a '
+        + 'time, in the order the standard performs them.',
     ),
   );
 
@@ -352,30 +344,306 @@ export function buildPane2(): HTMLElement {
   const extractButton = button('Extract the key', 'p2-extract');
   const rekeyButton = button('Force t1 = 0 for this identity', 'p2-force-t1zero', 'danger');
 
-  const stepsHost = el('div', { testid: 'p2-steps-host' }, [
-    statusPill('pending', 'pending — press Extract'),
-  ]);
+  const mapControl = segmented(
+    'Identity-to-scalar map',
+    [
+      { value: 'standard', label: 'SM9\'s H1', hint: 'the standard\'s own map' },
+      { value: 'altered', label: 'An altered H1', hint: 'a good hash that is not SM9\'s' },
+    ],
+    'standard',
+    () => {
+      // Changing the map changes every value below it, so the old ones go.
+      retire();
+      run();
+    },
+    'p2-map',
+  );
+
+  const relationHost = el('div', { testid: 'p2-relation' });
   const verdictHost = verdictSlot('p2-extract-verdict', 'pending — no key has been extracted yet');
+  const questionsHost = el('div', { testid: 'p2-questions-host' });
   const annexHost = el('div', { testid: 'p2-annex-host' });
   const rekeyHost = el('div', { testid: 'p2-rekey-host' });
 
-  function render(result: Rendered): void {
-    const { outcome, master, side } = result;
+  /** Handles of the value slots, so a reveal writes into the line already painted. */
+  let slots: Map<string, HTMLElement> = new Map();
+  let revealTimers: number[] = [];
+
+  function cancelReveal(): void {
+    for (const timer of revealTimers) window.clearTimeout(timer);
+    revealTimers = [];
+  }
+
+  /**
+   * Paint the relation's lines with empty slots.
+   *
+   * Called on first mount and on every retire, so the symbolic path is the one
+   * thing on this pane that is never absent: a reader who has computed nothing
+   * still sees what pressing the button is going to do.
+   */
+  function paintRelation(side: Side): void {
     const masterName = side === 'signature' ? 'ks' : 'ke';
+    const generator = side === 'signature' ? 'P1' : 'P2';
+    const keyName = side === 'signature' ? 'ds_A' : 'de_B';
+    const lines = relationLines(masterName, generator, keyName);
+
+    const list = el('ol', { class: 'relation', testid: 'p2-relation-list' });
+    slots = new Map();
+    for (const line of lines) {
+      const slot = el('div', { class: 'relation-slot', testid: `p2-step-${line.key}` }, [
+        el('span', { class: 'relation-pending', text: PENDING_SLOT }),
+      ]);
+      slots.set(line.key, slot);
+      list.appendChild(
+        el('li', { class: 'relation-line', testid: `p2-line-${line.key}` }, [
+          // Description and value are two grid columns above 62rem and one below
+          // it. Stacked at every width, the six lines ran to seven hundred pixels
+          // and pushed the experiment they exist to set up off the screen.
+          el('div', { class: 'relation-desc' }, [
+            el('div', { class: 'relation-head' }, [
+              line.op === undefined
+                ? el('span', { class: 'relation-op relation-op-first', text: 'start' })
+                : el('span', { class: 'relation-op', text: line.op }),
+              el('span', { class: 'relation-term', text: line.term }),
+            ]),
+            el('span', { class: 'relation-hint', text: line.hint }),
+          ]),
+          slot,
+        ]),
+      );
+    }
+    replace(relationHost, [
+      list,
+      el('div', { class: 'relation-master' }, [
+        kv(
+          [[
+            `${masterName} — the master private key, held only by the KGC`,
+            el('div', { testid: 'p2-step-master' }, [el('span', { class: 'relation-pending', text: PENDING_SLOT })]),
+          ]],
+          'p2-master-value',
+        ),
+      ]),
+    ]);
+    slots.set('master', relationHost.querySelector('[data-testid="p2-step-master"]') as HTMLElement);
+  }
+
+  function fill(key: string, contents: HTMLElement[]): void {
+    const slot = slots.get(key);
+    if (slot === undefined) return;
+    replace(slot, contents);
+    const line = slot.closest('.relation-line');
+    if (line !== null) line.classList.add('is-filled');
+  }
+
+  /**
+   * Fill the slots one at a time, marking the line being performed.
+   *
+   * The values are computed BEFORE any of this runs — the stagger is a rendering
+   * of work already finished, never a simulation of work in progress, because a
+   * page that pretended to compute slowly would be lying about a measurement.
+   * Under `prefers-reduced-motion: reduce` every line lands at once.
+   */
+  function reveal(order: { key: string; contents: HTMLElement[] }[]): void {
+    cancelReveal();
+    const instant = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (instant) {
+      for (const entry of order) fill(entry.key, entry.contents);
+      return;
+    }
+    order.forEach((entry, index) => {
+      revealTimers.push(
+        window.setTimeout(() => {
+          const line = slots.get(entry.key)?.closest('.relation-line');
+          if (line !== null && line !== undefined) {
+            line.classList.add('is-active');
+            window.setTimeout(() => line.classList.remove('is-active'), REVEAL_MS * 2);
+          }
+          fill(entry.key, entry.contents);
+        }, index * REVEAL_MS),
+      );
+    });
+  }
+
+  /**
+   * The five questions, asked identically under both maps.
+   *
+   * WHY THIS IS A TABLE AND NOT PROSE. The finding is a DIFFERENCE, and a
+   * difference is only visible when the questions are held still. Under SM9's own
+   * H1 every row agrees. Under the altered map exactly two rows change — the key
+   * is a different key, and the annex's pinned value no longer matches — while
+   * the cancellation identity and the agreeing verifier stay exactly as green as
+   * they were. That is the whole thesis of the lab on one screen.
+   */
+  function renderQuestions(result: Rendered): void {
+    const { outcome, master, side, map } = result;
+    if (!outcome.ok) {
+      replace(questionsHost, []);
+      return;
+    }
+    const identity = identityInput.value;
+    const hid = outcome.hid;
+    const key = keyHex(outcome);
+
+    // Q1 — the same key SM9's own H1 would have issued?
+    const standardOutcome = extract(side, identity, hid, master, 'standard');
+    const standardKey = standardOutcome.ok ? keyHex(standardOutcome) : undefined;
+    const sameKey = standardKey !== undefined && standardKey.x === key.x && standardKey.y === key.y;
+
+    // Q2 — the cancellation identity.
+    const cancels = mul(outcome.t1, outcome.t2) === master % N;
+
+    // Q3 and Q5 — the round trip, which only exists on the signature side.
+    const roundTrip = (():
+      | { kind: 'ran'; agreeing: boolean; agreeingFailure: string | null; real: boolean; realFailure: string | null }
+      | { kind: 'not-applicable' } => {
+      if (side !== 'signature' || !('dsA' in outcome)) return { kind: 'not-applicable' };
+      const Ppubs = signMasterKeyPair(master).Ppubs;
+      const signature = sign(ANNEX_MESSAGE, outcome.dsA, Ppubs, { nonce: () => ANNEX_R }).signature;
+      const agreeing = verify(ANNEX_MESSAGE, identity, signature, Ppubs, { hid, identityHash: mapOf(map) });
+      const real = verify(ANNEX_MESSAGE, identity, signature, Ppubs, { hid });
+      return {
+        kind: 'ran',
+        agreeing: agreeing.accepted,
+        agreeingFailure: agreeing.failure,
+        real: real.accepted,
+        realFailure: real.failure,
+      };
+    })();
+
+    // Q4 — the pinned value, which exists only for the exact annex parameter set.
+    const expectation = annexExpectation(side, identity, hid);
+    const pinnedRows = expectation === undefined
+      ? undefined
+      : [
+          [toFieldHex(outcome.h1), expectation.h1],
+          [toFieldHex(outcome.t1), expectation.t1],
+          [toFieldHex(outcome.t2), expectation.t2],
+          [key.x, expectation.x],
+          [key.y, expectation.y],
+        ] as [string, string][];
+    const pinnedAgrees = pinnedRows?.every(([actual, want]) => actual === want.toLowerCase());
+
+    const naPill = (why: string, testid: string): HTMLElement => statusPill('info', why, testid);
+
+    replace(questionsHost, [
+      heading('The decisive experiment — the same five questions under either map'),
+      el('div', { class: 'questions' }, [
+        tableEl(
+          ['What is being asked', 'The answer in the state on screen'],
+          [
+            [
+              el('span', { text: 'Is this the key SM9\'s own H1 would have issued for this name?' }),
+              statusPill(
+                sameKey ? 'ok' : 'bad',
+                sameKey ? 'the same key, byte for byte' : 'a DIFFERENT key',
+                'p2-q-samekey',
+              ),
+            ],
+            [
+              el('span', { text: 'Does the cancellation identity t1 · t2 = master still hold?' }),
+              statusPill(
+                cancels ? 'info' : 'bad',
+                cancels ? 'it holds — and it holds for ANY h1' : 'the cancellation identity FAILED',
+                'p2-q-cancels',
+              ),
+            ],
+            [
+              el('span', { text: 'Does a verifier using THIS SAME map accept a signature under this key?' }),
+              roundTrip.kind === 'not-applicable'
+                ? naPill('not asked — a signature round trip needs the signature master key', 'p2-q-agreeing')
+                : statusPill(
+                    roundTrip.agreeing ? (map === 'altered' ? 'alarm' : 'ok') : 'bad',
+                    roundTrip.agreeing
+                      ? map === 'altered' ? 'ACCEPTED — and that is the finding' : 'ACCEPTED'
+                      : `refused at ${roundTrip.agreeingFailure}`,
+                    'p2-q-agreeing',
+                  ),
+            ],
+            [
+              el('span', { text: 'Does SM9\'s REAL verifier accept that same signature?' }),
+              roundTrip.kind === 'not-applicable'
+                ? naPill('not asked — a signature round trip needs the signature master key', 'p2-q-realverifier')
+                : statusPill(
+                    roundTrip.real ? 'ok' : 'bad',
+                    roundTrip.real ? 'ACCEPTED' : `refused at ${roundTrip.realFailure}`,
+                    'p2-q-realverifier',
+                  ),
+            ],
+            [
+              el('span', { text: 'Do the intermediates GM/T 0044.5 pins for this identity agree?' }),
+              pinnedAgrees === undefined
+                ? naPill('nothing pinned for this identity, hid and master key pair', 'p2-q-pinned')
+                : statusPill(
+                    pinnedAgrees ? 'ok' : 'bad',
+                    pinnedAgrees
+                      ? `every intermediate matches ${expectation?.label}`
+                      : `an intermediate DIFFERS from ${expectation?.label}`,
+                    'p2-q-pinned',
+                  ),
+            ],
+          ],
+          'p2-questions-table',
+          'The same five questions, answered in the state currently on screen',
+        ),
+      ]),
+      note(
+        map === 'altered'
+          ? [
+              el('strong', { text: 'Three rows now say no. Two still say yes. ' }),
+              'The two that held — the cancellation identity, and a verifier using this same altered '
+                + 'map — are the only checks a round trip can make about itself, and neither of them '
+                + 'can see WHICH identity map produced the key. Extraction sets t1 = h1 + master and '
+                + 't2 = master · t1⁻¹, so t1 · t2 = master whatever h1 was, and the equation '
+                + 'verification checks does not contain H1 at all. The three that went red each needed '
+                + 'something this run does not contain: SM9\'s own H1, or the intermediates GM/T '
+                + '0044.5 prints. An implementation that hashed identities wrongly but CONSISTENTLY '
+                + 'would pass every round trip it ever ran against itself and fail exactly those three. '
+                + 'That is why a green round trip is weaker evidence than one pinned external value.',
+            ]
+          : [
+              el('strong', { text: 'Now switch the map above to "An altered H1". ' }),
+              'Every row agrees, which is the state most implementations ship in. Two of these five '
+                + 'rows will still say yes under a map that is not SM9\'s — and those two are exactly '
+                + 'the checks a round trip performs on itself.',
+            ],
+        map === 'altered',
+        'p2-questions-note',
+      ),
+      roundTrip.kind === 'not-applicable'
+        ? note(
+            [
+              'The round-trip rows need a signature key. Switch the master key pair above back to the '
+                + 'signature pair to ask them.',
+            ],
+            false,
+            'p2-questions-na',
+          )
+        : note(
+            [
+              `The round trip signs GM/T 0044.5 Annex A's own message, "${annexA.signature.message.ascii}", `
+                + 'on the annex\'s own nonce r, under whichever key was just extracted. Only the key and '
+                + 'the map change between the two states.',
+            ],
+            false,
+            'p2-questions-inputs',
+          ),
+    ]);
+  }
+
+  function render(result: Rendered): void {
+    const { outcome, master, side, map } = result;
     const generator = side === 'signature' ? 'P1' : 'P2';
     const keyName = side === 'signature' ? 'ds_A' : 'de_B';
 
     if (!outcome.ok) {
-      replace(stepsHost, [
-        stepList([
-          { label: 'ID ‖ hid', value: hexBlock(bytesToHex(outcome.idWithHid)), testid: 'p2-step-idhid' },
-          { label: 'h1 = H1(ID‖hid, N)', value: hexBlock(toFieldHex(outcome.h1)), testid: 'p2-step-h1' },
-          { label: `${masterName} (KGC only)`, value: hexBlock(toFieldHex(master)), testid: 'p2-step-master' },
-          { label: `t1 = h1 + ${masterName}`, value: hexBlock(toFieldHex(outcome.t1)), testid: 'p2-step-t1' },
-          { label: 't1⁻¹ mod N', value: el('span', { text: 'does not exist — 0 is not invertible' }), testid: 'p2-step-t1inv' },
-          { label: `t2 = ${masterName} · t1⁻¹`, value: el('span', { text: 'not computed — there is no t1⁻¹' }), testid: 'p2-step-t2' },
-          { label: keyName, value: el('span', { text: 'not issued' }), testid: 'p2-step-key' },
-        ]),
+      reveal([
+        { key: 'master', contents: [hexBlock(toFieldHex(master))] },
+        { key: 'idhid', contents: [hexBlock(bytesToHex(outcome.idWithHid))] },
+        { key: 'h1', contents: [hexBlock(toFieldHex(outcome.h1))] },
+        { key: 't1', contents: [hexBlock(toFieldHex(outcome.t1))] },
+        { key: 't1inv', contents: [el('span', { text: 'does not exist — 0 is not invertible' })] },
+        { key: 't2', contents: [el('span', { text: 'not computed — there is no t1⁻¹' })] },
+        { key: 'key', contents: [el('span', { text: 'not issued' })] },
       ]);
       setVerdict(
         verdictHost,
@@ -383,58 +651,56 @@ export function buildPane2(): HTMLElement {
         `${outcome.outcome} — no key can be issued for this identity under this master key`,
         outcome.reason,
       );
+      replace(questionsHost, []);
+      replace(annexHost, []);
       return;
     }
 
     const t1Inverse = inv(outcome.t1);
     const key = keyHex(outcome);
-    // t1 · t2 = master, for ANY h1. This is the identity every other exhibit
-    // in the lab rests on, so it is computed here rather than asserted.
-    const cancels = mul(outcome.t1, outcome.t2) === master % N;
 
-    replace(stepsHost, [
-      stepList([
-        { label: 'ID ‖ hid', value: hexBlock(bytesToHex(outcome.idWithHid)), testid: 'p2-step-idhid' },
-        { label: 'h1 = H1(ID‖hid, N)', value: hexBlock(toFieldHex(outcome.h1)), testid: 'p2-step-h1' },
-        { label: `${masterName} (KGC only)`, value: hexBlock(toFieldHex(master)), testid: 'p2-step-master' },
-        { label: `t1 = h1 + ${masterName}`, value: hexBlock(toFieldHex(outcome.t1)), testid: 'p2-step-t1' },
-        { label: 't1⁻¹ mod N', value: hexBlock(toFieldHex(t1Inverse)), testid: 'p2-step-t1inv' },
-        { label: `t2 = ${masterName} · t1⁻¹`, value: hexBlock(toFieldHex(outcome.t2)), testid: 'p2-step-t2' },
-        {
-          label: `${keyName} = [t2]${generator}`,
-          value: el('div', {}, [
+    reveal([
+      { key: 'master', contents: [hexBlock(toFieldHex(master))] },
+      { key: 'idhid', contents: [hexBlock(bytesToHex(outcome.idWithHid))] },
+      { key: 'h1', contents: [hexBlock(toFieldHex(outcome.h1))] },
+      { key: 't1', contents: [hexBlock(toFieldHex(outcome.t1))] },
+      { key: 't1inv', contents: [hexBlock(toFieldHex(t1Inverse))] },
+      { key: 't2', contents: [hexBlock(toFieldHex(outcome.t2))] },
+      {
+        key: 'key',
+        contents: [
+          el('div', {}, [
             el('div', {}, [sourceTag(`in ${key.group}`)]),
             hexBlock(`x  ${key.x}`),
             hexBlock(`y  ${key.y}`),
           ]),
-          testid: 'p2-step-key',
-        },
-      ]),
-      el('div', {}, [
-        statusPill(cancels ? 'info' : 'bad', cancels ? `t1 · t2 = ${masterName} mod N` : 'the cancellation identity FAILED', 'p2-identity-check'),
-      ]),
-      note(
-        [
-          el('strong', { text: 'Why that last line matters. ' }),
-          `t1 · t2 = ${masterName} holds for ANY value of h1 — the master key is recovered from the product `
-            + 'whatever the identity hashed to. Verification only ever sees that product, so it never '
-            + 'learns which identity was used, only that extraction and verification used the same one. '
-            + 'Pane 3 runs that live with a deliberately wrong H1.',
         ],
-        false,
-        'p2-cancellation-note',
-      ),
+      },
     ]);
 
     setVerdict(
       verdictHost,
-      'ok',
-      `${keyName} issued in ${key.group} for "${identityInput.value}" at hid ${hidHex(outcome.hid)}`,
+      map === 'altered' ? 'alarm' : 'ok',
+      `${keyName} issued in ${key.group} for "${identityInput.value}" at hid ${hidHex(outcome.hid)}`
+        + (map === 'altered' ? ' — under an altered H1' : ''),
       `One modular inversion in F_N, then one scalar multiplication of ${generator}. `
-        + 'The identity appears nowhere in the key except through h1, which cancels later.',
+        + (map === 'altered'
+          ? 'The map that produced h1 is not SM9\'s, and nothing downstream of the inversion can tell.'
+          : 'The identity appears nowhere in the key except through h1, which cancels later.'),
     );
 
-    const expectation = annexExpectation(side, identityInput.value, outcome.hid);
+    renderQuestions(result);
+    renderAnnex(result, key, keyName);
+  }
+
+  function renderAnnex(
+    result: Rendered,
+    key: { x: string; y: string; group: string },
+    keyName: string,
+  ): void {
+    const { outcome, map } = result;
+    if (!outcome.ok) return;
+    const expectation = annexExpectation(result.side, identityInput.value, outcome.hid);
     if (expectation === undefined) {
       replace(annexHost, [
         note(
@@ -461,7 +727,7 @@ export function buildPane2(): HTMLElement {
     ];
     const allMatch = rows.every(([, actual, want]) => actual === want.toLowerCase());
     replace(annexHost, [
-      heading('Against the annex\'s own pinned intermediates'),
+      heading('Every intermediate, against the annex\'s own pinned values'),
       el('div', {}, [
         sourceTag(expectation.label, 'p2-annex-source'),
         ' ',
@@ -481,9 +747,13 @@ export function buildPane2(): HTMLElement {
       note(
         [
           el('strong', { text: 'These pinned values are the only check that catches a wrong H1. ' }),
-          'A sign-then-verify round trip cannot tell you WHICH identity-to-scalar map was used, only that both sides used the same one; see panes 3 and 5. An '
-            + 'implementation that hashed identities wrongly but consistently would pass every round '
+          'A sign-then-verify round trip cannot tell you WHICH identity-to-scalar map was used, only '
+            + 'that both sides used the same one — the experiment above runs exactly that. An '
+            + `implementation that hashed identities wrongly but consistently would pass every round `
             + 'trip it ran against itself and fail exactly this table.',
+          map === 'altered'
+            ? ' The map above is currently the altered one, which is why this table disagrees.'
+            : '',
         ],
         false,
         'p2-annex-why',
@@ -492,14 +762,40 @@ export function buildPane2(): HTMLElement {
   }
 
   function run(): void {
-    replace(stepsHost, [statusPill('info', 'computing')]);
+    cancelReveal();
+    const side = sideSelect.value as Side;
+    paintRelation(side);
     clear(rekeyHost);
     defer(() => {
-      const side = sideSelect.value as Side;
       const hid = Number(hidSelect.value);
       const master = masterScalar(side);
-      render({ outcome: extract(side, identityInput.value, hid, master), master, side });
+      const map = mapControl.get() as Map1;
+      const outcome = extract(side, identityInput.value, hid, master, map);
+      render({ outcome, master, side, map });
+      if (outcome.ok) {
+        const keyName = side === 'signature' ? 'ds_A' : 'de_B';
+        host.onComplete(
+          `${keyName} issued for "${identityInput.value}" at hid ${hidHex(hid)}`
+            + (map === 'altered' ? ', under an ALTERED H1' : ', reproducing the annex')
+            + ' — one inversion mod N, one scalar multiplication',
+        );
+      } else {
+        // The refusal is a real result and the reader caused it, but it issued no
+        // key, so the step it unlocks has nothing to work with.
+        host.onStale();
+      }
     });
+  }
+
+  /** Drop every verdict about the previous input, and say nothing in its place. */
+  function retire(): void {
+    cancelReveal();
+    paintRelation(sideSelect.value as Side);
+    setVerdict(verdictHost, 'pending', 'pending — no key has been extracted yet');
+    replace(questionsHost, []);
+    replace(annexHost, []);
+    clear(rekeyHost);
+    host.onStale();
   }
 
   function forceRekey(): void {
@@ -512,22 +808,22 @@ export function buildPane2(): HTMLElement {
       // It is a perfectly valid scalar in [1, N-1], so nothing about the call below
       // is special-cased — the branch is reached the way the standard describes it.
       const forced = masterKeyForcingT1Zero(identity, hid);
-      const outcome = extract(side, identity, hid, forced);
+      const outcome = extract(side, identity, hid, forced, 'standard');
       const masterName = side === 'signature' ? 'ks' : 'ke';
 
       if (outcome.ok) {
         // Unreachable: masterKeyForcingT1Zero solves t1 = 0 for exactly this
         // identity and hid. Reported rather than thrown, because a page that
         // cannot reach the branch it claims to reach must say so.
-        const host = el('div', {});
+        const errorHost = el('div', {});
         setVerdict(
-          host,
+          errorHost,
           'bad',
           'the forced master key did not produce t1 = 0',
           'The identity or hid changed between solving for the master key and extracting with it. '
             + 'Press the button again.',
         );
-        replace(rekeyHost, [host]);
+        replace(rekeyHost, [errorHost]);
         return;
       }
 
@@ -576,15 +872,24 @@ export function buildPane2(): HTMLElement {
 
   /** A local verdict builder, so the re-key block can name the outcome as its own text. */
   function verdictEl(text: string, why: string): HTMLElement {
-    const host = el('div', { testid: 'p2-rekey-verdict' });
-    setVerdict(host, 'alarm', text, why);
-    return host;
+    const verdictRoot = el('div', { testid: 'p2-rekey-verdict' });
+    setVerdict(verdictRoot, 'alarm', text, why);
+    return verdictRoot;
   }
 
   extractButton.addEventListener('click', run);
-  identityInput.addEventListener('change', run);
-  hidSelect.addEventListener('change', run);
-  sideSelect.addEventListener('change', run);
+  identityInput.addEventListener('change', () => {
+    retire();
+    run();
+  });
+  hidSelect.addEventListener('change', () => {
+    retire();
+    run();
+  });
+  sideSelect.addEventListener('change', () => {
+    retire();
+    run();
+  });
   rekeyButton.addEventListener('click', forceRekey);
 
   body.appendChild(
@@ -592,6 +897,7 @@ export function buildPane2(): HTMLElement {
       labelled('Identity', identityInput),
       labelled('hid byte', hidSelect),
       labelled('Master key pair', sideSelect),
+      mapControl.root,
       extractButton,
     ]),
   );
@@ -607,88 +913,97 @@ export function buildPane2(): HTMLElement {
       'p2-master-provenance',
     ),
   );
+  // RESULT, THEN THE FINDING, THEN THE DERIVATION. The five questions sit
+  // directly under the verdict so the thing worth carrying away is in the same
+  // screen as the control that produced it; the six lines of the relation are the
+  // derivation underneath. Before anything is run `questionsHost` is empty, so the
+  // symbolic path with its empty slots is still the first thing under the verdict.
   body.appendChild(verdictHost);
-  body.appendChild(stepsHost);
+  body.appendChild(questionsHost);
+  body.appendChild(heading('The relation, line by line'));
+  body.appendChild(relationHost);
   body.appendChild(annexHost);
 
-  body.appendChild(heading('The t1 = 0 branch, reachable on this page'));
-  body.appendChild(
-    para(
-      'GM/T 0044.2 clause 5.3 step A3 has a branch nobody ever reaches by accident: if t1 comes out '
-        + 'zero the key cannot be issued. The button below solves for the master key that makes it '
-        + 'happen for whatever identity and hid are selected above, and runs the same extraction code '
-        + 'path with it.',
-    ),
-  );
-  body.appendChild(controls([rekeyButton]));
-  body.appendChild(rekeyHost);
-
-  body.appendChild(heading('Two master key pairs, mirrored across the two groups'));
-  body.appendChild(
-    para(
-      'The scalar arithmetic above is identical on both sides — the same h1, the same sum, the same '
-        + 'inversion. What differs is which group each key lands in, and the two sides are exact '
-        + 'mirrors of each other. Getting them the wrong way round produces a key that is a perfectly '
-        + 'good curve point and is useless, with nothing thrown.',
-    ),
-  );
-  body.appendChild(mirrorDiagram());
-  body.appendChild(
-    sideBySide([
-      box(
-        'Signature — GM/T 0044.2 clause 5.3',
-        [
-          kv([
-            ['master private', el('span', { text: 'ks, held only by the KGC' })],
-            ['master public', el('span', { text: 'Ppub-s = [ks]P2 — in G2, the LARGE group' })],
-            ['user key', el('span', { text: 'ds_A = [t2]P1 — in G1, the small group' })],
-            ['consequence', el('span', { text: 'an SM9 signature is 32 + 64 bytes, because S lives in G1' })],
-          ]),
-        ],
-        'p2-mirror-sign',
-      ),
-      box(
-        'Encryption — GM/T 0044.3 clause 5.3',
-        [
-          kv([
-            ['master private', el('span', { text: 'ke, held only by the KGC' })],
-            ['master public', el('span', { text: 'Ppub-e = [ke]P1 — in G1, the small group' })],
-            ['user key', el('span', { text: 'de_B = [t2]P2 — in G2, the large group' })],
-            ['consequence', el('span', { text: 'a ciphertext carries C1 in G1 and the private key does the G2 work' })],
-          ]),
-        ],
-        'p2-mirror-encrypt',
-      ),
-    ]),
-  );
-
-  body.appendChild(heading('What SM9 is not: Boneh-Franklin'));
-  body.appendChild(
-    para(
-      'The scheme most readers meet first is Boneh-Franklin, and it does the obvious thing: hash the '
-        + 'identity onto the curve, then multiply that point by the master scalar. SM9 does neither '
-        + 'half of that. The diagram below is static — nothing on this page runs Boneh-Franklin, and '
-        + 'nothing here should be read as an implementation of it.',
-    ),
-  );
-  body.appendChild(bonehFranklinDiagram());
-  body.appendChild(comparisonTable());
-  body.appendChild(
-    note(
-      [
-        'A running Boneh-Franklin scheme, with its own hash-to-curve and its own master key, is a '
-          + 'different exhibit in this fleet: ',
-        el('a', { text: 'crypto-lab-ibe-gate', attrs: { href: IBE_GATE, target: '_blank', rel: 'noopener' }, testid: 'p2-bf-link' }),
-        '.',
-      ],
-      false,
-      'p2-bf-note',
-    ),
-  );
   body.appendChild(
     detailsEl(
-      'Why the inversion, rather than the multiplication?',
+      'The t1 = 0 branch — the refusal nobody reaches by accident',
       [
+        para(
+          'GM/T 0044.2 clause 5.3 step A3 has a branch nobody ever reaches by accident: if t1 comes out '
+            + 'zero the key cannot be issued. The button below solves for the master key that makes it '
+            + 'happen for whatever identity and hid are selected above, and runs the same extraction code '
+            + 'path with it.',
+        ),
+        controls([rekeyButton]),
+        rekeyHost,
+      ],
+      'p2-t1zero-details',
+    ),
+  );
+
+  body.appendChild(
+    detailsEl(
+      'Two master key pairs, mirrored across the two groups',
+      [
+        para(
+          'The scalar arithmetic above is identical on both sides — the same h1, the same sum, the same '
+            + 'inversion. What differs is which group each key lands in, and the two sides are exact '
+            + 'mirrors of each other. Getting them the wrong way round produces a key that is a perfectly '
+            + 'good curve point and is useless, with nothing thrown.',
+        ),
+        mirrorTable(),
+        sideBySide([
+          box(
+            'Signature — GM/T 0044.2 clause 5.3',
+            [
+              kv([
+                ['master private', el('span', { text: 'ks, held only by the KGC' })],
+                ['master public', el('span', { text: 'Ppub-s = [ks]P2 — in G2, the LARGE group' })],
+                ['user key', el('span', { text: 'ds_A = [t2]P1 — in G1, the small group' })],
+                ['consequence', el('span', { text: 'an SM9 signature is 32 + 64 bytes, because S lives in G1' })],
+              ]),
+            ],
+            'p2-mirror-sign',
+          ),
+          box(
+            'Encryption — GM/T 0044.3 clause 5.3',
+            [
+              kv([
+                ['master private', el('span', { text: 'ke, held only by the KGC' })],
+                ['master public', el('span', { text: 'Ppub-e = [ke]P1 — in G1, the small group' })],
+                ['user key', el('span', { text: 'de_B = [t2]P2 — in G2, the large group' })],
+                ['consequence', el('span', { text: 'a ciphertext carries C1 in G1 and the private key does the G2 work' })],
+              ]),
+            ],
+            'p2-mirror-encrypt',
+          ),
+        ]),
+      ],
+      'p2-mirror-details',
+    ),
+  );
+
+  body.appendChild(
+    detailsEl(
+      'What SM9 is not: Boneh-Franklin, and why the inversion is there at all',
+      [
+        para(
+          'The scheme most readers meet first is Boneh-Franklin, and it does the obvious thing: hash the '
+            + 'identity onto the curve, then multiply that point by the master scalar. SM9 does neither '
+            + 'half of that.',
+        ),
+        bonehFranklinFlows(),
+        comparisonTable(),
+        note(
+          [
+            'A running Boneh-Franklin scheme, with its own hash-to-curve and its own master key, is a '
+              + 'different exhibit in this fleet: ',
+            el('a', { text: 'crypto-lab-ibe-gate', attrs: { href: IBE_GATE, target: '_blank', rel: 'noopener' }, testid: 'p2-bf-link' }),
+            '.',
+          ],
+          false,
+          'p2-bf-note',
+        ),
         para(
           'Hashing onto a curve is awkward to do in constant time and awkward to standardise — the map '
             + 'has to be indifferentiable from a random oracle and cheap, and the literature took years '
@@ -703,8 +1018,23 @@ export function buildPane2(): HTMLElement {
     ),
   );
 
-  // First render, so the pane is never empty of the act it is about.
-  run();
+  // The symbolic path, with nothing computed. Painted on mount so the reader can
+  // see what the button is going to do before pressing it.
+  paintRelation('signature');
 
-  return root;
+  return {
+    root,
+    reset: () => {
+      cancelReveal();
+      identityInput.value = 'Alice';
+      hidSelect.value = String(HID.SIGN);
+      sideSelect.value = 'signature';
+      mapControl.set('standard');
+      paintRelation('signature');
+      setVerdict(verdictHost, 'pending', 'pending — no key has been extracted yet');
+      replace(questionsHost, []);
+      replace(annexHost, []);
+      clear(rekeyHost);
+    },
+  };
 }

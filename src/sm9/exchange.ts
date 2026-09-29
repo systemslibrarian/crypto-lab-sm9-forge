@@ -277,7 +277,7 @@ export const HID_CONVENTIONS: readonly HidConvention[] = [
   },
   {
     hid: HID.EXCHANGE_GMSSL,
-    source: 'GmSSL, emmansun/gmsm and (reportedly) Bouncy Castle',
+    source: 'GmSSL, emmansun/gmsm and Bouncy Castle',
     kind: 'implementation convention',
     declaredAt: 'gmssl-sm9.h: #define SM9_HID_EXCH 0x02',
     inTheStandard: false,

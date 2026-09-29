@@ -133,18 +133,49 @@ async function expectBadgeAgreesWithCells(
   expect(saysAgree, `badge "${badge}" against\n  ${computed}\n  ${published}`).toBe(computed === published);
 }
 
-/** Load the lab and wait for pane 2, which extracts a key on first paint. */
+/**
+ * Open the lab in the state the value claims below are about.
+ *
+ * TWO DELIBERATE CHOICES HERE. First, FULL EVIDENCE rather than the guided path:
+ * this suite is about what the page CLAIMS, and it needs every exhibit reachable
+ * without driving four steps to get to the fifth. The guided sequence is a claim
+ * of its own and is tested as one, in its own describe block below. Second, the
+ * extraction is PERFORMED rather than assumed — the pane no longer runs on load,
+ * which is the whole point of the guided shell, so a suite that still waited for a
+ * verdict to appear by itself would be waiting for a bug.
+ */
 async function openLab(page: Page): Promise<void> {
   await page.goto('./');
+  await at(page, 'lab-view-full').check();
+  await at(page, 'p2-extract').click();
   await expect(at(page, 'p2-extract-verdict').locator('.verdict-ok')).toHaveCount(1);
+  await awaitRelation(page);
 }
 
-/** Acts (b) and (c) of pane 3 ship collapsed; a reader opens them by clicking. */
+/**
+ * Wait for the staged reveal to finish.
+ *
+ * The relation's six lines fill one at a time, so a single-shot `textContent`
+ * read of an early step can land mid-sequence. The last line carries `is-filled`
+ * only once its value has been written, which makes it the honest completion
+ * signal — never a timeout.
+ */
+async function awaitRelation(page: Page): Promise<void> {
+  await expect(at(page, 'p2-line-key')).toHaveClass(/is-filled/);
+}
+
+/** Several exhibits ship collapsed; a reader opens them by clicking the summary. */
 async function openDetails(page: Page, testid: string): Promise<void> {
   const details = at(page, testid);
   if (await details.evaluate((node) => (node as HTMLDetailsElement).open)) return;
   await details.locator('> summary').click();
   await expect(details).toHaveAttribute('open', '');
+}
+
+/** Panes 3 and 5 hold their acts in tab sets; a reader selects one by clicking. */
+async function openTab(page: Page, id: string): Promise<void> {
+  await at(page, `tab-${id}`).click();
+  await expect(at(page, `tab-${id}`)).toHaveAttribute('aria-selected', 'true');
 }
 
 const WORD_NUMBER: Record<string, number> = {
@@ -396,8 +427,9 @@ test.describe('pane 2 — extraction and the inversion', () => {
     // every other exhibit in this lab rests on.
     expect(mod(t1 * t2, n)).toBe(mod(master, n));
 
-    // And the page's own pill says so, in words, beside the values.
-    await expectStatus(page, 'p2-identity-check', 'info', /t1 · t2 = ks mod N/);
+    // And the page's own pill says so, in words, in the row of the decisive
+    // experiment that asks exactly this question.
+    await expectStatus(page, 'p2-q-cancels', 'info', /it holds for ANY h1/);
     await expectVerdict(page, 'p2-extract-verdict', 'ok', /ds_A issued in G1 for "Alice"/);
   });
 
@@ -425,6 +457,7 @@ test.describe('pane 2 — extraction and the inversion', () => {
 
   test('the t1 = 0 branch is reachable, names its outcome, and issues nothing', async ({ page }) => {
     await openLab(page);
+    await openDetails(page, 'p2-t1zero-details');
     await at(page, 'p2-force-t1zero').click();
     await expect(at(page, 'p2-rekey-values')).toHaveCount(1);
 
@@ -464,6 +497,7 @@ test.describe('retirement of stale verdicts', () => {
     // Two verdicts about "Alice": the annex comparison, and the re-key alarm.
     await expectStatus(page, 'p2-annex-badge', 'ok');
     await expect(at(page, 'p2-annex-table')).toHaveCount(1);
+    await openDetails(page, 'p2-t1zero-details');
     await at(page, 'p2-force-t1zero').click();
     await expectVerdict(page, 'p2-rekey-verdict', 'alarm');
 
@@ -494,6 +528,7 @@ test.describe('retirement of stale verdicts', () => {
 
   test('re-typing the same identity does NOT retire a fresh verdict', async ({ page }) => {
     await openLab(page);
+    await openDetails(page, 'p2-t1zero-details');
     await at(page, 'p2-force-t1zero').click();
     const headline = await expectVerdict(page, 'p2-rekey-verdict', 'alarm');
     const forcedMaster = await text(page, 'p2-rekey-master');
@@ -571,6 +606,7 @@ test.describe('pane 3 (a) — sign and verify', () => {
     const pinnedH = await text(page, 'p3a-pinned-h');
     const pinnedS = await text(page, 'p3a-pinned-s');
 
+    await openDetails(page, 'p3a-fresh-details');
     await at(page, 'p3a-fresh-r').click();
     await expect(at(page, 'p3a-fresh-verify-status')).toHaveCount(1);
     const freshR = await text(page, 'p3a-fresh-r-value');
@@ -597,6 +633,7 @@ test.describe('pane 3 (a) — sign and verify', () => {
 
   test('every must-reject case names its failure code and clause step, and the prose count matches the table', async ({ page }) => {
     await openLab(page);
+    await openDetails(page, 'p3a-negatives-details');
     await at(page, 'p3a-run-negatives').click();
     await expect(at(page, 'p3a-negatives-table')).toHaveCount(1);
 
@@ -663,6 +700,7 @@ test.describe('pane 3 (a) — the wrong-H1 negative-claim fixture', () => {
     // 1. THE FIXTURE IS REACHED THROUGH THE UI. No flag, no query string, no
     //    test-only hook: the same button a visitor presses.
     await expect(at(page, 'p3a-wrongh1-limitation')).toHaveCount(0);
+    await openDetails(page, 'p3a-wrongh1-details');
     await at(page, 'p3a-wrongh1-run').click();
     await expect(at(page, 'p3a-wrongh1-values')).toHaveCount(1);
 
@@ -684,6 +722,7 @@ test.describe('pane 3 (a) — the wrong-H1 negative-claim fixture', () => {
     // can reach goes red.
     await at(page, 'p3a-run').click();
     await expectStatus(page, 'p3a-verify-status', 'ok', /VERIFIED/);
+    await openDetails(page, 'p3a-negatives-details');
     await at(page, 'p3a-run-negatives').click();
     await expectStatus(page, 'p3a-negatives-status', 'ok', /all \d+ refused/);
 
@@ -737,7 +776,7 @@ test.describe('pane 3 (a) — the wrong-H1 negative-claim fixture', () => {
 test.describe('pane 3 (b) — key exchange', () => {
   test('both sides reach one session key, and every annex badge agrees with its cells', async ({ page }) => {
     await openLab(page);
-    await openDetails(page, 'p3b-details');
+    await openTab(page, 'p3b');
     await at(page, 'p3b-run').click();
     await expect(at(page, 'p3b-annex-table')).toHaveCount(1);
 
@@ -784,7 +823,7 @@ test.describe('pane 3 (b) — key exchange', () => {
 test.describe('pane 3 (c) — KEM and public key encryption', () => {
   test('the ciphertext is exactly C1 ‖ C3 ‖ C2, and the plaintext is the message the page printed', async ({ page }) => {
     await openLab(page);
-    await openDetails(page, 'p3c-details');
+    await openTab(page, 'p3c');
     await at(page, 'p3c-run-pke').click();
     await expect(at(page, 'p3c-b-values')).toHaveCount(1);
 
@@ -830,7 +869,7 @@ test.describe('pane 3 (c) — KEM and public key encryption', () => {
 
   test('the KEM diverges silently where public key encryption names a cause', async ({ page }) => {
     await openLab(page);
-    await openDetails(page, 'p3c-details');
+    await openTab(page, 'p3c');
     await at(page, 'p3c-run-kem').click();
     await expect(at(page, 'p3c-kem-wrong')).toHaveCount(1);
     await at(page, 'p3c-run-pke').click();
@@ -1034,6 +1073,7 @@ test.describe('pane 5 (a) — the reused nonce', () => {
 test.describe('pane 5 (b) — the hid divergence', () => {
   test('both session keys are rendered, they DIFFER, each is labelled by source, and neither is an error', async ({ page }) => {
     await openLab(page);
+    await openTab(page, 'p5b');
     await at(page, 'p5b-run').click();
     await expect(at(page, 'p5b-literal-values')).toHaveCount(1);
 
@@ -1075,6 +1115,7 @@ test.describe('pane 5 (b) — the hid divergence', () => {
 
   test('the group elements are byte-identical across the two hid values, and only R_A moves', async ({ page }) => {
     await openLab(page);
+    await openTab(page, 'p5b');
     await at(page, 'p5b-run').click();
     await expect(at(page, 'p5b-g-values')).toHaveCount(1);
 
@@ -1098,6 +1139,7 @@ test.describe('pane 5 (b) — the hid divergence', () => {
 
   test('the misprint diagnosis is settled against the annex\'s own printed digest', async ({ page }) => {
     await openLab(page);
+    await openTab(page, 'p5b');
     await at(page, 'p5b-run').click();
     await expect(at(page, 'p5b-misprint-table')).toHaveCount(1);
 
@@ -1134,6 +1176,7 @@ test.describe('pane 5 (b) — the hid divergence', () => {
 
   test('the literal reading does not complete, and that is rendered INFO rather than a failure', async ({ page }) => {
     await openLab(page);
+    await openTab(page, 'p5b');
     await at(page, 'p5b-run').click();
     await expect(at(page, 'p5b-literal-values')).toHaveCount(1);
 
@@ -1256,4 +1299,185 @@ test('pane 1 runs a deliberately wrong vector and reports it as a mismatch', asy
   const passed = Number(((await page.getByTestId('p1-sm3-passed').textContent()) ?? '').replace(/\D+/g, ''));
   const total = Number(((await page.getByTestId('p1-sm3-total').textContent()) ?? '').replace(/\D+/g, ''));
   expect(passed).toBe(total);
+});
+
+// ---------------------------------------------------------------------------
+// THE GUIDED PATH — the shell's own claims, tested as claims
+// ---------------------------------------------------------------------------
+
+test.describe('the guided lab', () => {
+  test('nothing is computed before the reader causes it, and the symbolic path is still on screen', async ({ page }) => {
+    await page.goto('./');
+
+    // THE CONTRADICTION THIS REPLACES. The page used to open with pane 1 saying
+    // "pending — not yet run" directly above pane 2 saying "ds_A issued": the
+    // headline act had already happened and nobody had pressed anything.
+    await expect(at(page, 'p1-sm3-summary')).toContainText('pending');
+    await expect(at(page, 'p2-extract-verdict').locator('.verdict-pending')).toHaveCount(1);
+    await expect(at(page, 'p2-extract-verdict').locator('.verdict-ok')).toHaveCount(0);
+    await expect(at(page, 'p2-annex-table')).toHaveCount(0);
+    await expect(at(page, 'p2-questions-table')).toHaveCount(0);
+
+    // ... and every value slot in the relation says so rather than showing a
+    // placeholder number or the annex's own figure standing in for a measured one.
+    for (const key of ['idhid', 'h1', 'master', 't1', 't1inv', 't2', 'key']) {
+      expect(await text(page, `p2-step-${key}`), `p2-step-${key} is not pending`).toBe('—');
+    }
+
+    // The path itself IS painted, with its operations named, so a reader can see
+    // what the button is going to do before pressing it.
+    for (const key of ['idhid', 'h1', 't1', 't1inv', 't2', 'key']) {
+      await expect(at(page, `p2-line-${key}`)).toHaveCount(1);
+    }
+    expect(await text(page, 'p2-line-t1inv')).toMatch(/INVERT MOD N|invert mod N/i);
+  });
+
+  test('step 2 unlocks on step 1 succeeding, not on its button being pressed, and the unlock is announced', async ({ page }) => {
+    await page.goto('./');
+    await expectStatus(page, 'rail-state-sm3', 'info', /^ready$/);
+    await expectStatus(page, 'rail-state-extract', 'pending', /^locked$/);
+    await expect(at(page, 'lock-extract')).toBeVisible();
+    await expect(at(page, 'p2-extract')).not.toBeVisible();
+
+    await at(page, 'p1-run-sm3').click();
+    await expect(at(page, 'p1-sm3-status')).toBeVisible();
+
+    // The gate is the RESULT: zero failures and a negative control that was
+    // correctly reported as a mismatch. Both are asserted from the page.
+    await expect(at(page, 'p1-sm3-failed')).toHaveText(/^0 failed$/);
+    await expectStatus(page, 'p1-sm3-control', 'ok', /negative control correctly/);
+
+    await expectStatus(page, 'rail-state-extract', 'info', /^ready$/);
+    await expect(at(page, 'lab-live')).toContainText(/Step 2, extract an identity key/);
+
+    // The collapsed line a completed step leaves behind is the step's own
+    // measured totals, not a constant: it has to agree with the counts the
+    // summary printed.
+    await at(page, 'next-sm3').click();
+    const published = await text(page, 'p1-sm3-published');
+    expect(await text(page, 'summary-sm3')).toContain(published.replace(' published in the annexes', ''));
+    await expect(at(page, 'p2-extract')).toBeVisible();
+  });
+
+  test('resetting a step clears it and relocks every step after it', async ({ page }) => {
+    await page.goto('./');
+    await at(page, 'p1-run-sm3').click();
+    await expect(at(page, 'p1-sm3-status')).toBeVisible();
+    await at(page, 'next-sm3').click();
+    await at(page, 'p2-extract').click();
+    await awaitRelation(page);
+    await expectStatus(page, 'rail-state-protocols', 'info', /^ready$/);
+
+    // Back/Reset/Next belong to the step you are in, so a collapsed step is
+    // reopened through the control on its own line first — which is also the
+    // control a reader uses to go back and look at what they did.
+    await at(page, 'reopen-sm3').click();
+    await expect(at(page, 'p1-run-sm3')).toBeVisible();
+    await at(page, 'reset-sm3').click();
+
+    // Step 1's own result is gone, and so is everything it unlocked. A page that
+    // relocked the rail and left "ds_A issued" on screen underneath would be
+    // publishing a verdict about a run it no longer holds.
+    await expect(at(page, 'p1-sm3-summary')).toContainText('pending');
+    await expect(at(page, 'p1-sm3-table')).toHaveCount(0);
+    await expectStatus(page, 'rail-state-extract', 'pending', /^locked$/);
+    await expectStatus(page, 'rail-state-protocols', 'pending', /^locked$/);
+    await expect(at(page, 'p2-extract-verdict').locator('.verdict-ok')).toHaveCount(0);
+    await expect(at(page, 'p2-questions-table')).toHaveCount(0);
+    expect(await text(page, 'p2-step-t1inv')).toBe('—');
+  });
+
+  test('Full evidence unlocks every step, and the rail stops saying locked', async ({ page }) => {
+    await page.goto('./');
+    await expect(at(page, 'p5b-run')).not.toBeVisible();
+
+    await at(page, 'lab-view-full').check();
+
+    for (const id of ['sm3', 'extract', 'protocols', 'kgc', 'break']) {
+      await expect(at(page, `lock-${id}`), `${id} is still locked`).not.toBeVisible();
+      // The rail is a claim about the page beside it. A rail still reading
+      // "locked" next to an expanded pane would be the rail contradicting it.
+      expect(await text(page, `rail-state-${id}`)).not.toMatch(/locked/);
+    }
+    await expect(at(page, 'p1-run-sm3')).toBeVisible();
+    await expect(at(page, 'p5a-run')).toBeVisible();
+  });
+
+  test('the run transcript is read off the rendered page, and agrees with it', async ({ page }) => {
+    await openLab(page);
+    await at(page, 'lab-transcript').click();
+    await expect(at(page, 'lab-transcript-json')).toHaveCount(1);
+
+    const json = await at(page, 'lab-transcript-json').inputValue();
+    const transcript = JSON.parse(json) as {
+      steps: {
+        step: string;
+        values: { testid: string; value: string }[];
+        verdicts: { testid: string; kind: string; headline: string }[];
+        inputs: { testid: string; value: string }[];
+      }[];
+    };
+
+    const extract = transcript.steps.find((step) => step.step === 'extract');
+    expect(extract, 'the transcript has no extraction step').toBeDefined();
+
+    // THE POINT OF THE EXPORT IS THAT IT CANNOT DISAGREE WITH THE SCREEN. Every
+    // value is checked against the element it was read from, so a transcript
+    // assembled from a parallel copy of the state would fail here.
+    const t2 = extract?.values.find((entry) => entry.testid === 'p2-step-t2');
+    expect(t2?.value).toBe(await text(page, 'p2-step-t2'));
+
+    const verdict = extract?.verdicts.find((entry) => entry.testid === 'p2-extract-verdict');
+    expect(verdict?.kind).toBe('ok');
+    expect(verdict?.headline).toBe(await expectVerdict(page, 'p2-extract-verdict', 'ok'));
+
+    expect(extract?.inputs.find((entry) => entry.testid === 'p2-identity')?.value).toBe('Alice');
+    // The map is a radio group; only the CHECKED option is a state of this run.
+    expect(extract?.inputs.filter((entry) => /^p2-map-/.test(entry.testid)).map((e) => e.testid))
+      .toEqual(['p2-map-standard']);
+  });
+
+  test('the decisive experiment changes exactly three of its five answers, and names which', async ({ page }) => {
+    await openLab(page);
+
+    // Under SM9's own H1 every row agrees.
+    await expectStatus(page, 'p2-q-samekey', 'ok');
+    await expectStatus(page, 'p2-q-cancels', 'info');
+    await expectStatus(page, 'p2-q-agreeing', 'ok', /^ACCEPTED$/);
+    await expectStatus(page, 'p2-q-realverifier', 'ok', /^ACCEPTED$/);
+    await expectStatus(page, 'p2-q-pinned', 'ok', /Annex A/);
+
+    await at(page, 'p2-map-altered').check();
+    await awaitRelation(page);
+
+    // THE WHOLE THESIS, AS A PARTITION. The two that still say yes are exactly
+    // the two a round trip performs on itself; the three that go red each need
+    // something the run does not contain.
+    await expectStatus(page, 'p2-q-cancels', 'info', /holds for ANY h1/);
+    await expectStatus(page, 'p2-q-agreeing', 'alarm', /ACCEPTED/);
+    await expectStatus(page, 'p2-q-samekey', 'bad', /DIFFERENT key/);
+    await expectStatus(page, 'p2-q-realverifier', 'bad', /refused at HASH-MISMATCH/);
+    await expectStatus(page, 'p2-q-pinned', 'bad', /DIFFERS/);
+
+    // The two keys really are different keys, so the fixture is real rather than
+    // a relabelling: assert it from the values, not from the badge.
+    const alteredT2 = await text(page, 'p2-step-t2');
+    await at(page, 'p2-map-standard').check();
+    await awaitRelation(page);
+    expect(await text(page, 'p2-step-t2')).not.toBe(alteredT2);
+    await expectStatus(page, 'p2-q-pinned', 'ok', /Annex A/);
+  });
+
+  test('the evidence limits are in the page, not only in the README', async ({ page }) => {
+    await page.goto('./');
+    await openDetails(page, 'lab-limits');
+    const limits = await text(page, 'lab-limits');
+    expect(limits).toMatch(/Fp12 pairing values rest on one engine/);
+    expect(limits).toMatch(/No constant-time property is claimed or tested/);
+    expect(limits).toMatch(/GB\/T 41389-2022 has not been read/);
+    expect(limits).toMatch(/paywalled/);
+    // The one attribution that used to be second-hand now names the file it was
+    // read in, which is the difference between a citation and a rumour.
+    expect(limits).toMatch(/SM9EncMasterPrivateKeyParameters\.java/);
+  });
 });

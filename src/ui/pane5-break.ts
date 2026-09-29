@@ -46,6 +46,7 @@ import annexA from '../sm9/fixtures/annexA-fixture.json';
 import kexVectors from '../sm9/fixtures/sm9-keyexchange-vectors.json';
 import {
   button,
+  clear,
   controls,
   defer,
   detailsEl,
@@ -66,9 +67,12 @@ import {
   sourceTag,
   statusPill,
   tableEl,
+  tabs,
   textInput,
   verdictSlot,
 } from './dom';
+
+import type { Exhibit, ExhibitHost } from './exhibit';
 
 const KS = BigInt(`0x${annexA.signature.ks}`);
 const SM2_FORGE = 'https://systemslibrarian.github.io/crypto-lab-sm2-forge/';
@@ -95,7 +99,12 @@ const PRINTED_H1_BESIDE: Record<string, { hex: string; lines: string; alsoPrinte
 // (a) break it yourself
 // ---------------------------------------------------------------------------
 
-function buildBreak(): HTMLElement {
+interface Act {
+  panel: HTMLElement;
+  reset: () => void;
+}
+
+function buildBreak(report: (performed: boolean) => void): Act {
   const message1 = textInput('Release the build at 09:00.', 'p5a-msg1', 32);
   const message2 = textInput('Release the build at 17:00.', 'p5a-msg2', 32);
   const message3 = textInput('Grant the deploy key to the bearer of this note.', 'p5a-msg3', 44);
@@ -156,107 +165,14 @@ function buildBreak(): HTMLElement {
       const forgedChecked = verify(m3, 'Alice', forged.signature, master.Ppubs, { hid: HID.SIGN });
       const forgedHex = signatureToHex(forged.signature);
 
+      // THE RESULT FIRST, THE DERIVATION UNDER IT. What a reader needs in the
+      // first screen is that a signature the key's owner never made was accepted by
+      // this page's own verifier. How the key was recovered is the interesting part
+      // and it is the second thing, not the first: leading with two genuine
+      // signatures and a page of modular arithmetic buries the finding under its
+      // own evidence.
       replace(output, [
-        heading('Step 1 — two signatures, one nonce, both genuine'),
-        tableEl(
-          ['', 'message', 'h', 'the real verifier'],
-          [
-            [
-              el('span', { text: 'signature 1' }),
-              el('span', { text: message1.value }),
-              hexBlock(toFieldHex(sig1.signature.h), 'p5a-sig1-h'),
-              statusPill(ok1.accepted ? 'ok' : 'bad', ok1.accepted ? 'ACCEPTED' : `refused at ${ok1.failure}`, 'p5a-sig1-verify'),
-            ],
-            [
-              el('span', { text: 'signature 2' }),
-              el('span', { text: message2.value }),
-              hexBlock(toFieldHex(sig2.signature.h), 'p5a-sig2-h'),
-              statusPill(ok2.accepted ? 'ok' : 'bad', ok2.accepted ? 'ACCEPTED' : `refused at ${ok2.failure}`, 'p5a-sig2-verify'),
-            ],
-          ],
-          'p5a-signatures',
-          'Two signatures made under one reused nonce',
-        ),
-        kv(
-          [
-            ['r, reused across both (never transmitted)', hexBlock(toFieldHex(reused), 'p5a-r')],
-            [
-              'the two nonces were the same',
-              equality(sig1.r === sig2.r, 'yes — this is the mistake', 'no', 'p5a-same-nonce'),
-            ],
-          ],
-          'p5a-nonce',
-        ),
-
-        heading('Step 2 — the arithmetic'),
-        el('ul', { class: 'steps' }, [
-          el('li', {}, [
-            el('span', { class: 'step-label', text: 'S1' }),
-            el('span', { class: 'step-val', text: '[(r − h1)]ds_A' }),
-          ]),
-          el('li', {}, [
-            el('span', { class: 'step-label', text: 'S2' }),
-            el('span', { class: 'step-val', text: '[(r − h2)]ds_A' }),
-          ]),
-          el('li', {}, [
-            el('span', { class: 'step-label', text: 'S1 − S2' }),
-            el('span', { class: 'step-val', text: '[(r − h1) − (r − h2)]ds_A = [h2 − h1]ds_A — the r cancels' }),
-          ]),
-          el('li', {}, [
-            el('span', { class: 'step-label', text: 'ds_A' }),
-            el('span', { class: 'step-val', text: '[(h2 − h1)⁻¹](S1 − S2) — one inversion mod N, one multiplication in G1' }),
-          ]),
-        ]),
-        kv(
-          [
-            [
-              'S1 − S2, the intermediate',
-              hexBlock(
-                recovery.sDifference === undefined
-                  ? 'not produced by this method'
-                  : `${toFieldHex(recovery.sDifference.X)}${toFieldHex(recovery.sDifference.Y)}`,
-                'p5a-sdiff',
-              ),
-            ],
-            ['method', el('span', { text: recovery.method, testid: 'p5a-method' })],
-            ['recovered ds_A, x', hexBlock(toFieldHex(recovery.dsA.X), 'p5a-recovered-x')],
-            ['recovered ds_A, y', hexBlock(toFieldHex(recovery.dsA.Y), 'p5a-recovered-y')],
-            [
-              'is it the key the KGC issued?',
-              equality(recoveredIsGenuine, 'the same point in G1', 'a different point', 'p5a-recovered-matches'),
-            ],
-            [
-              'recovered private SCALAR',
-              el('span', {
-                text: 'there is none. The result type has no field for one, because an SM9 private key '
-                  + 'is a group element and not a number.',
-                testid: 'p5a-no-scalar',
-              }),
-            ],
-            [
-              'the same key from the nonce alone',
-              equality(
-                fromKnownR.ok && sameG1Point(fromKnownR.dsA, extracted.dsA),
-                'recovered from ONE signature and its r',
-                'not recovered',
-                'p5a-known-nonce',
-              ),
-            ],
-          ],
-          'p5a-recovery',
-        ),
-        note(
-          [
-            'The last row is the sharper form of the same fact: a leaked or predictable r on a SINGLE '
-              + 'signature is already fatal, because ds_A = [(r − h)⁻¹]S. A second signature is only '
-              + 'needed when r is unknown. That is why r must be unpredictable and secret, not merely '
-              + 'non-repeating.',
-          ],
-          false,
-          'p5a-known-nonce-note',
-        ),
-
-        heading('Step 3 — forge on a message the key\'s owner never saw'),
+        heading('The result — a signature Alice never made, accepted by the real verifier'),
         kv(
           [
             ['forged message', el('span', { text: message3.value, testid: 'p5a-forged-message' })],
@@ -274,6 +190,111 @@ function buildBreak(): HTMLElement {
           ],
           'p5a-forged',
         ),
+        detailsEl(
+          'How the key was recovered — the two signatures, and the arithmetic',
+          [
+          heading('Step 1 — two signatures, one nonce, both genuine'),
+          tableEl(
+            ['', 'message', 'h', 'the real verifier'],
+            [
+              [
+                el('span', { text: 'signature 1' }),
+                el('span', { text: message1.value }),
+                hexBlock(toFieldHex(sig1.signature.h), 'p5a-sig1-h'),
+                statusPill(ok1.accepted ? 'ok' : 'bad', ok1.accepted ? 'ACCEPTED' : `refused at ${ok1.failure}`, 'p5a-sig1-verify'),
+              ],
+              [
+                el('span', { text: 'signature 2' }),
+                el('span', { text: message2.value }),
+                hexBlock(toFieldHex(sig2.signature.h), 'p5a-sig2-h'),
+                statusPill(ok2.accepted ? 'ok' : 'bad', ok2.accepted ? 'ACCEPTED' : `refused at ${ok2.failure}`, 'p5a-sig2-verify'),
+              ],
+            ],
+            'p5a-signatures',
+            'Two signatures made under one reused nonce',
+          ),
+          kv(
+            [
+              ['r, reused across both (never transmitted)', hexBlock(toFieldHex(reused), 'p5a-r')],
+              [
+                'the two nonces were the same',
+                equality(sig1.r === sig2.r, 'yes — this is the mistake', 'no', 'p5a-same-nonce'),
+              ],
+            ],
+            'p5a-nonce',
+          ),
+
+          heading('Step 2 — the arithmetic'),
+          el('ul', { class: 'steps' }, [
+            el('li', {}, [
+              el('span', { class: 'step-label', text: 'S1' }),
+              el('span', { class: 'step-val', text: '[(r − h1)]ds_A' }),
+            ]),
+            el('li', {}, [
+              el('span', { class: 'step-label', text: 'S2' }),
+              el('span', { class: 'step-val', text: '[(r − h2)]ds_A' }),
+            ]),
+            el('li', {}, [
+              el('span', { class: 'step-label', text: 'S1 − S2' }),
+              el('span', { class: 'step-val', text: '[(r − h1) − (r − h2)]ds_A = [h2 − h1]ds_A — the r cancels' }),
+            ]),
+            el('li', {}, [
+              el('span', { class: 'step-label', text: 'ds_A' }),
+              el('span', { class: 'step-val', text: '[(h2 − h1)⁻¹](S1 − S2) — one inversion mod N, one multiplication in G1' }),
+            ]),
+          ]),
+          kv(
+            [
+              [
+                'S1 − S2, the intermediate',
+                hexBlock(
+                  recovery.sDifference === undefined
+                    ? 'not produced by this method'
+                    : `${toFieldHex(recovery.sDifference.X)}${toFieldHex(recovery.sDifference.Y)}`,
+                  'p5a-sdiff',
+                ),
+              ],
+              ['method', el('span', { text: recovery.method, testid: 'p5a-method' })],
+              ['recovered ds_A, x', hexBlock(toFieldHex(recovery.dsA.X), 'p5a-recovered-x')],
+              ['recovered ds_A, y', hexBlock(toFieldHex(recovery.dsA.Y), 'p5a-recovered-y')],
+              [
+                'is it the key the KGC issued?',
+                equality(recoveredIsGenuine, 'the same point in G1', 'a different point', 'p5a-recovered-matches'),
+              ],
+              [
+                'recovered private SCALAR',
+                el('span', {
+                  text: 'there is none. The result type has no field for one, because an SM9 private key '
+                    + 'is a group element and not a number.',
+                  testid: 'p5a-no-scalar',
+                }),
+              ],
+              [
+                'the same key from the nonce alone',
+                equality(
+                  fromKnownR.ok && sameG1Point(fromKnownR.dsA, extracted.dsA),
+                  'recovered from ONE signature and its r',
+                  'not recovered',
+                  'p5a-known-nonce',
+                ),
+              ],
+            ],
+            'p5a-recovery',
+          ),
+          note(
+            [
+              'The last row is the sharper form of the same fact: a leaked or predictable r on a SINGLE '
+                + 'signature is already fatal, because ds_A = [(r − h)⁻¹]S. A second signature is only '
+                + 'needed when r is unknown. That is why r must be unpredictable and secret, not merely '
+                + 'non-repeating.',
+            ],
+            false,
+            'p5a-known-nonce-note',
+          ),
+
+          ],
+          'p5a-derivation',
+        ),
       ]);
 
       setVerdict(
@@ -285,6 +306,9 @@ function buildBreak(): HTMLElement {
         'Nothing in the verifier is at fault and nothing was weakened to make this work. The signer '
           + 'reused one nonce, and clause 6.1\'s own algebra did the rest.',
       );
+      // Both halves: the recovered point has to BE the key the KGC issued, and the
+      // signature made with it has to be accepted. Either alone is not the finding.
+      report(recoveredIsGenuine && forgedChecked.accepted);
     });
   });
 
@@ -350,8 +374,8 @@ function buildBreak(): HTMLElement {
     });
   });
 
-  return el('div', {}, [
-    heading('(a) Break it yourself'),
+  const panel = el('div', { testid: 'p5a-act' }, [
+    heading('Break it yourself — one nonce, used twice'),
     para(
       'SM9 signing draws a nonce r, computes h = H2(M ‖ g^r) and outputs S = [(r − h)]ds_A. Sign two '
         + 'different messages under the same r and the two S values differ by [h2 − h1]ds_A — so '
@@ -396,13 +420,22 @@ function buildBreak(): HTMLElement {
       '.',
     ]),
   ]);
+
+  return {
+    panel,
+    reset: () => {
+      clear(output);
+      clear(refusal);
+      setVerdict(breakVerdict, 'pending', 'pending — nothing has been signed yet');
+    },
+  };
 }
 
 // ---------------------------------------------------------------------------
 // (b) the divergence
 // ---------------------------------------------------------------------------
 
-function buildDivergence(): HTMLElement {
+function buildDivergence(report: (performed: boolean) => void): Act {
   const runButton = button('Run Annex B at both hid values', 'p5b-run');
   const output = el('div', { testid: 'p5b-output' }, [statusPill('pending', 'pending — not yet run')]);
   const misprintHost = el('div', { testid: 'p5b-misprint' });
@@ -618,11 +651,18 @@ function buildDivergence(): HTMLElement {
           'p5b-literal-values',
         ),
       ]);
+      // The divergence has been shown when both conventions completed and both
+      // reached a session key their own side agrees on. `gEqual` is the finding:
+      // the group elements are identical and only the KDF input moved.
+      report(run03.agree && run02.agree);
     });
   });
 
-  return el('div', {}, [
-    heading('(b) The divergence — one byte, two session keys'),
+  const panel = el('div', { testid: 'p5b-act' }, [
+    // The tab names this act; the heading is here so the outline has no h2 -> h4
+    // step at the `box` elements further down. A tab label is not a heading, and a
+    // reader arriving in the panel by keyboard gets no title from one.
+    heading('One byte, two session keys — and neither side is wrong'),
     para(
       'The same master key, the same two identities, the same two nonces. The only difference is the '
         + 'one-byte hid the KGC publishes, and the two widely-used values for it do not agree.',
@@ -652,6 +692,15 @@ function buildDivergence(): HTMLElement {
       'p5b-no-causation',
     ),
   ]);
+
+  return {
+    panel,
+    reset: () => {
+      replace(output, [statusPill('pending', 'pending — not yet run')]);
+      clear(misprintHost);
+      clear(literalHost);
+    },
+  };
 }
 
 function misprintThirdLegNote(): HTMLElement {
@@ -668,7 +717,7 @@ function misprintThirdLegNote(): HTMLElement {
   );
 }
 
-export function buildPane5(): HTMLElement {
+export function buildPane5(host: ExhibitHost): Exhibit {
   const { root, body } = pane(
     'PANE 5',
     'The break, and the divergence',
@@ -684,8 +733,41 @@ export function buildPane5(): HTMLElement {
         + 'the other is not, and the difference between them is the point.',
     ),
   );
-  body.appendChild(buildBreak());
-  body.appendChild(buildDivergence());
+  // ONE STEP, TWO ACTS, AND THE STEP IS NOT DONE UNTIL BOTH RAN. The pane's own
+  // first paragraph says these two look alike on a status line and are nothing
+  // alike; a reader who saw only the break has not met the comparison the pane is
+  // actually about.
+  const performed = { forge: false, divergence: false };
+  function reportBoth(): void {
+    if (performed.forge && performed.divergence) {
+      host.onComplete(
+        'a private key recovered from two signatures that shared a nonce and used to forge a third, '
+          + 'and two conforming hid conventions reaching two different session keys from identical '
+          + 'group elements',
+      );
+    } else {
+      host.onStale();
+    }
+  }
+
+  const breakAct = buildBreak((ok) => {
+    performed.forge = ok;
+    reportBoth();
+  });
+  const divergenceAct = buildDivergence((ok) => {
+    performed.divergence = ok;
+    reportBoth();
+  });
+
+  const tabSet = tabs(
+    'The break and the divergence',
+    [
+      { id: 'p5a', label: '(a) Break it yourself — one reused nonce', panel: breakAct.panel },
+      { id: 'p5b', label: '(b) The divergence — one byte, two session keys', panel: divergenceAct.panel },
+    ],
+    'p5-tabs',
+  );
+  body.appendChild(tabSet.root);
   body.appendChild(
     detailsEl(
       'Where the two exhibits meet',
@@ -702,5 +784,14 @@ export function buildPane5(): HTMLElement {
     ),
   );
 
-  return root;
+  return {
+    root,
+    reset: () => {
+      performed.forge = false;
+      performed.divergence = false;
+      tabSet.select('p5a');
+      breakAct.reset();
+      divergenceAct.reset();
+    },
+  };
 }

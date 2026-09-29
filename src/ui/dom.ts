@@ -77,26 +77,153 @@ export function replace(host: Node, children: Child[]): void {
   append(host, children);
 }
 
-const SVG_NS = 'http://www.w3.org/2000/svg';
+/**
+ * WHY THERE IS NO SVG HELPER HERE ANY MORE.
+ *
+ * The two diagrams in pane 2 were inline SVG over a fixed `viewBox` at
+ * `width: 100%`. That is legible on a desktop and illegible on a phone: a
+ * 780-unit viewBox painted into 358 CSS pixels scales every label by 0.46, so
+ * the 11- and 12-unit labels rendered at roughly 5 to 7 CSS pixels. The
+ * accessibility gate measured their CONTRAST correctly and passed them, which is
+ * the trap — contrast is not legibility, and text nobody can read is a quality
+ * failure no axe rule reports.
+ *
+ * Both are now HTML, built from `flow` and `tableEl` below. Real text reflows,
+ * honours the reader's font size, can be selected, translated and zoomed, and
+ * needs no scale arithmetic to stay above 12 pixels. A picture was not what
+ * either diagram was carrying; a sequence and a two-by-two were.
+ */
 
 /**
- * An SVG element built with PRESENTATION attributes (`fill`, `stroke`,
- * `font-size`), which the CSP permits, rather than a `style` attribute, which it
- * does not. Colours are `currentColor` throughout so the diagrams inherit the
- * theme tokens from whatever class wraps them instead of hard-coding a palette
- * this file does not own.
+ * A pipeline, as an ordered list of the operations that produce each value.
+ *
+ * Each step names the operation that PRODUCED it rather than the one that
+ * follows, so the list reads correctly when it is read out: "ID and hid",
+ * "via H1, h1 — a scalar, not a point". The arrow is decoration on top of that
+ * sentence, not the thing carrying it.
  */
-export function svgEl(
-  tag: string,
-  attrs: Record<string, string> = {},
-  children: (Element | string)[] = [],
-): SVGElement {
-  const node = document.createElementNS(SVG_NS, tag);
-  for (const [name, value] of Object.entries(attrs)) node.setAttribute(name, value);
-  for (const child of children) {
-    node.appendChild(typeof child === 'string' ? document.createTextNode(child) : child);
+export interface FlowStep {
+  /** The operation that produced this node. Omitted on the first step. */
+  op?: string;
+  term: string;
+  hint?: string;
+  testid?: string;
+  /** Emit an empty value slot under the term, for a computed value written later. */
+  slot?: boolean;
+}
+
+export function flow(steps: FlowStep[], testid?: string): HTMLElement {
+  const list = el('ol', { class: 'flow', testid });
+  for (const step of steps) {
+    list.appendChild(
+      el('li', { class: 'flow-step', testid: step.testid === undefined ? undefined : `${step.testid}-step` }, [
+        step.op === undefined
+          ? null
+          : el('span', { class: 'flow-op' }, [
+              el('span', { class: 'flow-op-glyph', text: '→', attrs: { 'aria-hidden': 'true' } }),
+              el('span', { text: step.op }),
+            ]),
+        el('span', { class: 'flow-term', text: step.term }),
+        step.hint === undefined ? null : el('span', { class: 'flow-hint', text: step.hint }),
+        step.slot === true ? el('span', { class: 'flow-slot', testid: step.testid }) : null,
+      ]),
+    );
   }
-  return node;
+  return list;
+}
+
+/** A figure with its caption below it, so a diagram always says what it shows. */
+export function figureEl(caption: string, children: Child[], testid?: string): HTMLElement {
+  return el('figure', { class: 'fig', testid }, [...children, el('figcaption', { text: caption })]);
+}
+
+/**
+ * A one-of-N control as real radio inputs inside a fieldset.
+ *
+ * Radios rather than toggle buttons because this IS a one-of-N choice, and the
+ * browser already implements arrow-key movement, the roving tab stop and the
+ * group name for it. The inputs carry `appearance: none` and an explicit border
+ * in src/styles.css for a reason the accessibility gate enforces: a UA-painted
+ * radio computes to no background and no border, and WCAG 1.4.11 wants 3:1 for
+ * the boundary of every control.
+ */
+export interface Segment {
+  value: string;
+  label: string;
+  hint?: string;
+}
+
+let segmentedGroups = 0;
+
+export interface SegmentedControl {
+  root: HTMLElement;
+  get: () => string;
+  set: (value: string) => void;
+}
+
+export function segmented(
+  legend: string,
+  segments: Segment[],
+  value: string,
+  onChange: (value: string) => void,
+  testid?: string,
+): SegmentedControl {
+  segmentedGroups += 1;
+  const name = `seg-${segmentedGroups}`;
+  const inputs: HTMLInputElement[] = [];
+  const options = segments.map((segment) => {
+    const input = el('input', {
+      testid: `${testid ?? name}-${segment.value}`,
+      attrs: { type: 'radio', name, value: segment.value },
+    });
+    if (segment.value === value) input.checked = true;
+    input.addEventListener('change', () => {
+      if (input.checked) onChange(segment.value);
+    });
+    inputs.push(input);
+    return el('label', { class: 'seg-option' }, [
+      input,
+      el('span', { class: 'seg-body' }, [
+        el('span', { class: 'seg-label', text: segment.label }),
+        segment.hint === undefined ? null : el('span', { class: 'seg-hint', text: segment.hint }),
+      ]),
+    ]);
+  });
+
+  const root = el('fieldset', { class: 'segmented', testid }, [
+    el('legend', { text: legend }),
+    el('div', { class: 'seg-options' }, options),
+  ]);
+
+  return {
+    root,
+    get: () => inputs.find((input) => input.checked)?.value ?? value,
+    set: (next: string) => {
+      for (const input of inputs) input.checked = input.value === next;
+    },
+  };
+}
+
+/**
+ * A polite live region, for announcing something the reader did not cause to
+ * appear on screen where they are looking — a step unlocking, a reset.
+ *
+ * `role="status"` plus `aria-live="polite"` rather than an alert: none of these
+ * are interruptions, and an assertive region that fires on every completed step
+ * is worse than silence.
+ */
+export function liveRegion(testid: string): { root: HTMLElement; say: (message: string) => void } {
+  const root = el('div', {
+    class: 'lab-live',
+    testid,
+    attrs: { role: 'status', 'aria-live': 'polite', 'aria-atomic': 'true' },
+  });
+  return {
+    root,
+    say: (message: string) => {
+      root.textContent = message;
+    },
+  };
 }
 
 export interface PaneParts {
@@ -153,25 +280,6 @@ export function kv(entries: KvEntry[], testid?: string): HTMLElement {
   for (const [term, value] of entries) {
     list.appendChild(el('dt', { text: term }));
     list.appendChild(el('dd', {}, [value]));
-  }
-  return list;
-}
-
-export interface StepItem {
-  label: string;
-  value: Child;
-  testid?: string;
-}
-
-export function stepList(items: StepItem[], testid?: string): HTMLElement {
-  const list = el('ul', { class: 'steps', testid });
-  for (const item of items) {
-    list.appendChild(
-      el('li', {}, [
-        el('span', { class: 'step-label', text: item.label }),
-        el('span', { class: 'step-val', testid: item.testid }, [item.value]),
-      ]),
-    );
   }
   return list;
 }
@@ -339,4 +447,99 @@ export function encodeUtf8(text: string): Uint8Array {
 /** A one-byte hid as the standard writes it. */
 export function hidHex(hid: number): string {
   return `0x${hid.toString(16).padStart(2, '0')}`;
+}
+
+/**
+ * A tab set, implementing the ARIA tabs pattern by hand.
+ *
+ * WHY TABS RATHER THAN THREE DISCLOSURES. Pane 3's three acts are peers — one
+ * signature, one key exchange, one KEM — and as stacked `<details>` the second
+ * and third read as appendices to the first, reachable only by scrolling past two
+ * kilobytes of Fp12. As tabs they are three equals, each one click away, and only
+ * one occupies the page at a time.
+ *
+ * The keyboard contract is the pattern's, not the browser's, because a
+ * `role="tab"` is not a button any more as far as assistive technology is
+ * concerned: exactly one tab is in the tab order at a time (`tabindex`), and
+ * left/right/home/end move between them and move focus with the selection. A tab
+ * set that leaves every tab tabbable is a very common and very wrong
+ * implementation of this pattern.
+ */
+export interface TabSpec {
+  id: string;
+  label: string;
+  panel: HTMLElement;
+}
+
+export interface TabSet {
+  root: HTMLElement;
+  select: (id: string) => void;
+  ids: string[];
+}
+
+export function tabs(label: string, specs: TabSpec[], testid?: string): TabSet {
+  const buttons: HTMLButtonElement[] = [];
+  const panels: HTMLElement[] = [];
+
+  function select(id: string, moveFocus = false): void {
+    specs.forEach((spec, index) => {
+      const chosen = spec.id === id;
+      buttons[index].setAttribute('aria-selected', String(chosen));
+      buttons[index].setAttribute('tabindex', chosen ? '0' : '-1');
+      buttons[index].classList.toggle('is-selected', chosen);
+      panels[index].hidden = !chosen;
+      if (chosen && moveFocus) buttons[index].focus();
+    });
+  }
+
+  specs.forEach((spec, index) => {
+    const tab = el('button', {
+      class: 'tab',
+      testid: `tab-${spec.id}`,
+      text: spec.label,
+      attrs: {
+        type: 'button',
+        role: 'tab',
+        id: `tab-${spec.id}`,
+        'aria-controls': `tabpanel-${spec.id}`,
+        'aria-selected': 'false',
+        tabindex: '-1',
+      },
+    });
+    tab.addEventListener('click', () => select(spec.id));
+    tab.addEventListener('keydown', (event) => {
+      const step = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0;
+      if (step !== 0) {
+        event.preventDefault();
+        select(specs[(index + step + specs.length) % specs.length].id, true);
+        return;
+      }
+      if (event.key === 'Home') {
+        event.preventDefault();
+        select(specs[0].id, true);
+      }
+      if (event.key === 'End') {
+        event.preventDefault();
+        select(specs[specs.length - 1].id, true);
+      }
+    });
+    buttons.push(tab);
+
+    spec.panel.setAttribute('role', 'tabpanel');
+    spec.panel.setAttribute('id', `tabpanel-${spec.id}`);
+    spec.panel.setAttribute('aria-labelledby', `tab-${spec.id}`);
+    // A tab panel holding focusable content needs to be reachable itself, so a
+    // keyboard reader arriving from the tab lands in the panel rather than past it.
+    spec.panel.setAttribute('tabindex', '0');
+    spec.panel.classList.add('tabpanel');
+    panels.push(spec.panel);
+  });
+
+  const root = el('div', { class: 'tabset', testid }, [
+    el('div', { class: 'tablist', attrs: { role: 'tablist', 'aria-label': label } }, buttons),
+    ...panels,
+  ]);
+
+  select(specs[0].id);
+  return { root, select, ids: specs.map((spec) => spec.id) };
 }

@@ -1,8 +1,10 @@
 /**
  * PANE 3 — the three protocols, each beside the annex that pins it.
  *
- * Three acts, one per mechanism, each collapsible because a reader who came for
- * the extraction should not have to scroll past 2 KB of Fp12 to reach pane 4.
+ * Three acts, one per mechanism, as TABS: they are peers, so only one occupies
+ * the page at a time and none of them is an appendix to another. Stacked as
+ * disclosures, acts (b) and (c) sat below two kilobytes of act (a)'s Fp12 and
+ * read as afterthoughts.
  *
  *   (a) sign and verify          GM/T 0044.2 clauses 6.1 and 7.1, Annex A, hid 0x01
  *   (b) key exchange             GM/T 0044.3 clause 6.1, Annex B, hid 0x03
@@ -41,8 +43,10 @@ import {
 import annexA from '../sm9/fixtures/annexA-fixture.json';
 import annexCD from '../sm9/fixtures/sm9-annex-cd-fixtures.json';
 import kexVectors from '../sm9/fixtures/sm9-keyexchange-vectors.json';
+import type { Exhibit, ExhibitHost } from './exhibit';
 import {
   button,
+  clear,
   controls,
   decodeUtf8,
   defer,
@@ -60,6 +64,7 @@ import {
   sourceTag,
   statusPill,
   tableEl,
+  tabs,
 } from './dom';
 
 // ---------------------------------------------------------------------------
@@ -178,7 +183,12 @@ function signatureRows(
   );
 }
 
-function buildActA(): HTMLElement {
+interface ActA {
+  panel: HTMLElement;
+  reset: () => void;
+}
+
+function buildActA(host: ExhibitHost): ActA {
   const runPinned = button('Run Annex A with its pinned r', 'p3a-run');
   const runFresh = button('Sign again with a fresh random r', 'p3a-fresh-r', 'secondary');
   const runNegatives = button('Run the eight must-reject cases', 'p3a-run-negatives', 'secondary');
@@ -232,6 +242,18 @@ function buildActA(): HTMLElement {
           ),
         ]),
       ]);
+
+      // Both halves, or neither. A signature this lab produced and then accepted
+      // proves only that it agrees with itself; the step is complete when the key
+      // it signed under is ALSO the one Annex A prints.
+      if (verified.accepted && dsAHex === annexDsA) {
+        host.onComplete(
+          'GM/T 0044.5 Annex A reproduced byte for byte on its pinned nonce, and clause 7.1 accepted '
+            + 'the signature it prints',
+        );
+      } else {
+        host.onStale();
+      }
     });
   });
 
@@ -440,54 +462,79 @@ function buildActA(): HTMLElement {
     });
   });
 
-  return detailsEl(
-    '(a) Sign and verify — GM/T 0044.5 Annex A, hid 0x01',
-    [
-      para(
-        'Annex A prints a complete worked example: a master key, an identity, a message, the nonce r, '
-          + 'and every intermediate down to the signature. With r pinned the whole thing is byte '
-          + 'reproducible, which is what makes it a conformance vector rather than an illustration.',
-      ),
-      controls([runPinned]),
-      output,
-      heading('The same key and message, a fresh nonce'),
-      controls([runFresh]),
-      freshOutput,
-      detailsEl(
-        'The equations, in the standard\'s own notation',
-        [
-          kv([
-            ['A1', el('span', { text: 'g = e(P1, Ppub-s), an element of GT' })],
-            ['A2', el('span', { text: 'draw r in [1, N-1]' })],
-            ['A4', el('span', { text: 'w = g^r' })],
-            ['A5', el('span', { text: 'h = H2(M ‖ w, N)' })],
-            ['A6', el('span', { text: 'l = (r − h) mod N; if l = 0, go back to A2' })],
-            ['A7', el('span', { text: 'S = [l]ds_A — the signature is the pair (h, S)' })],
-            ['S3–S5', el('span', { text: 't = g^h′; P = [H1(ID_A ‖ hid, N)]P2 + Ppub-s; u = e(S′, P); w′ = u · t' })],
-            ['S6', el('span', { text: 'accept iff H2(M′ ‖ w′, N) = h′' })],
-          ]),
-          para(
-            'Note that r never appears in the signature and never reaches the verifier. w′ is '
-              + 'reconstructed from S and h, which is why a fresh r changes the signature and not the '
-              + 'verdict — and why pane 5 can recover the private key from two signatures that shared one.',
-          ),
-        ],
-        'p3a-equations',
-      ),
-      heading('The eight cases Annex A\'s fixture says must be refused'),
-      controls([runNegatives]),
-      negatives,
-      heading('What the round trip does not prove'),
-      para(
-        'Everything above verifies. Press the button below and watch the same verifier accept a '
-          + 'signature made under a key extracted with an identity hash that is not SM9\'s.',
-      ),
-      controls([runWrongH1]),
-      wrongH1,
-    ],
-    'p3a-details',
-    true,
-  );
+  const panel = el('div', { testid: 'p3a-details' }, [
+    heading('Annex A, reproduced on its own pinned nonce'),
+    para(
+      'Annex A prints a complete worked example: a master key, an identity, a message, the nonce r, '
+        + 'and every intermediate down to the signature. With r pinned the whole thing is byte '
+        + 'reproducible, which is what makes it a conformance vector rather than an illustration.',
+    ),
+    controls([runPinned]),
+    output,
+    detailsEl(
+      'The same key and message, a fresh nonce',
+      [
+        para(
+          'r never appears in the signature and never reaches the verifier, so a fresh nonce changes '
+            + 'every byte of the signature and none of the verdict. Differing from Annex A here is '
+            + 'CORRECT, which is why the badges below are INFO and not green.',
+        ),
+        controls([runFresh]),
+        freshOutput,
+      ],
+      'p3a-fresh-details',
+    ),
+    detailsEl(
+      'The equations, in the standard\'s own notation',
+      [
+        kv([
+          ['A1', el('span', { text: 'g = e(P1, Ppub-s), an element of GT' })],
+          ['A2', el('span', { text: 'draw r in [1, N-1]' })],
+          ['A4', el('span', { text: 'w = g^r' })],
+          ['A5', el('span', { text: 'h = H2(M ‖ w, N)' })],
+          ['A6', el('span', { text: 'l = (r − h) mod N; if l = 0, go back to A2' })],
+          ['A7', el('span', { text: 'S = [l]ds_A — the signature is the pair (h, S)' })],
+          ['S3–S5', el('span', { text: 't = g^h′; P = [H1(ID_A ‖ hid, N)]P2 + Ppub-s; u = e(S′, P); w′ = u · t' })],
+          ['S6', el('span', { text: 'accept iff H2(M′ ‖ w′, N) = h′' })],
+        ]),
+        para(
+          'Note that r never appears in the signature and never reaches the verifier. w′ is '
+            + 'reconstructed from S and h, which is why a fresh r changes the signature and not the '
+            + 'verdict — and why step 5 can recover the private key from two signatures that shared one.',
+        ),
+      ],
+      'p3a-equations',
+    ),
+    detailsEl(
+      'The eight cases Annex A\'s fixture says must be refused',
+      [controls([runNegatives]), negatives],
+      'p3a-negatives-details',
+    ),
+    detailsEl(
+      'What the round trip does not prove — the same finding as step 2, in full',
+      [
+        para(
+          'Step 2\'s two-state experiment asks five questions under an altered identity map. This is '
+            + 'the same finding with every intermediate printed: the same verifier, unmodified, '
+            + 'accepting a signature made under a key extracted with an identity hash that is not '
+            + 'SM9\'s.',
+        ),
+        controls([runWrongH1]),
+        wrongH1,
+      ],
+      'p3a-wrongh1-details',
+    ),
+  ]);
+
+  return {
+    panel,
+    reset: () => {
+      replace(output, [statusPill('pending', 'pending — not yet run')]);
+      replace(freshOutput, [statusPill('pending', 'pending — not yet run')]);
+      clear(negatives);
+      clear(wrongH1);
+    },
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -678,19 +725,16 @@ function buildActB(): HTMLElement {
     });
   });
 
-  return detailsEl(
-    '(b) Key exchange — GM/T 0044.5 Annex B, hid 0x03',
-    [
-      para(
-        'Two parties who have never met derive a shared key from each other\'s names, one round trip '
-          + 'each, with no certificate anywhere. Both sides are computed here, which a real deployment '
-          + 'obviously does not do — but each side\'s derivation sees only what that party holds.',
-      ),
-      controls([run]),
-      output,
-    ],
-    'p3b-details',
-  );
+  return el('div', { testid: 'p3b-details' }, [
+    heading('Two names, one round trip, no certificate'),
+    para(
+      'Two parties who have never met derive a shared key from each other\'s names, one round trip '
+        + 'each, with no certificate anywhere. Both sides are computed here, which a real deployment '
+        + 'obviously does not do — but each side\'s derivation sees only what that party holds.',
+    ),
+    controls([run]),
+    output,
+  ]);
 }
 
 // ---------------------------------------------------------------------------
@@ -970,24 +1014,21 @@ function buildActC(): HTMLElement {
     });
   });
 
-  return detailsEl(
-    '(c) KEM and public key encryption — GM/T 0044.5 Annexes C and D, hid 0x03',
-    [
-      para(
-        'SM9\'s encryption IS its KEM with a DEM bolted on: steps A1 to A5 are identical. They diverge '
-          + 'in exactly one place — what happens when decryption is handed the wrong thing.',
-      ),
-      controls([runKem]),
-      kemOut,
-      heading('Annex D — public key encryption, both modes'),
-      controls([runPke]),
-      pkeOut,
-    ],
-    'p3c-details',
-  );
+  return el('div', { testid: 'p3c-details' }, [
+    heading('Annex C — key encapsulation'),
+    para(
+      'SM9\'s encryption IS its KEM with a DEM bolted on: steps A1 to A5 are identical. They diverge '
+        + 'in exactly one place — what happens when decryption is handed the wrong thing.',
+    ),
+    controls([runKem]),
+    kemOut,
+    heading('Annex D — public key encryption, both modes'),
+    controls([runPke]),
+    pkeOut,
+  ]);
 }
 
-export function buildPane3(): HTMLElement {
+export function buildPane3(host: ExhibitHost): Exhibit {
   const { root, body } = pane(
     'PANE 3',
     'The three protocols',
@@ -1004,9 +1045,25 @@ export function buildPane3(): HTMLElement {
         + 'demonstrating.',
     ),
   );
-  body.appendChild(buildActA());
-  body.appendChild(buildActB());
-  body.appendChild(buildActC());
+  const actA = buildActA(host);
+  const actB = buildActB();
+  const actC = buildActC();
+  const tabSet = tabs(
+    'The three protocols',
+    [
+      { id: 'p3a', label: '(a) Sign and verify — Annex A, hid 0x01', panel: actA.panel },
+      { id: 'p3b', label: '(b) Key exchange — Annex B, hid 0x03', panel: actB },
+      { id: 'p3c', label: '(c) KEM and encryption — Annexes C and D, hid 0x03', panel: actC },
+    ],
+    'p3-tabs',
+  );
+  body.appendChild(tabSet.root);
 
-  return root;
+  return {
+    root,
+    reset: () => {
+      tabSet.select('p3a');
+      actA.reset();
+    },
+  };
 }

@@ -37,6 +37,11 @@ jobs:
         run: npm run test:e2e
       - name: Accessibility gate (axe-core, WCAG A/AA)
         run: npm run test:a11y
+      # The quality failures no accessibility rule reports: text too small to read,
+      # a dead gap in the hero, a landing page a mile long with its first action
+      # below the fold. See the header of e2e/geometry.spec.ts.
+      - name: Geometry and density gate
+        run: npm run test:geometry
       - uses: actions/upload-pages-artifact@v5
         with: { path: dist }
 

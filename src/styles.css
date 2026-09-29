@@ -123,7 +123,7 @@ code, pre, .mono, .hex {
   justify-content: space-between;
   gap: clamp(1rem, 4vw, 3rem);
   flex-wrap: wrap;
-  margin: clamp(1rem, 3vw, 2rem) 0 1.5rem;
+  margin: clamp(0.75rem, 2.5vw, 1.5rem) 0 1.1rem;
 }
 .cl-hero-main { flex: 1 1 22rem; min-width: min(100%, 20rem); }
 .cl-hero-title {
@@ -165,11 +165,18 @@ code, pre, .mono, .hex {
 
 @media (max-width: 640px) {
   .cl-hero { flex-direction: column; }
+  /* BOTH children need their basis reset, not just the aside. In a COLUMN flex
+     container `flex-basis` sizes the cross... no: it sizes the MAIN axis, which is
+     now height. `.cl-hero-main` carried `flex: 1 1 22rem`, so at 390px it asked
+     for a 352px-tall box, grew into it, and left a measured 184px of nothing
+     between the description and the panel below. Resetting the basis to auto lets
+     it be as tall as its text. */
+  .cl-hero-main { flex: 0 1 auto; }
   .cl-hero-why { flex-basis: auto; width: 100%; }
 }
 
 .cl-scope-note {
-  margin: 0 0 2rem;
+  margin: 0 0 1.25rem;
   padding: 0.7rem 0.95rem;
   border-left: 3px solid var(--border-strong);
   background: var(--bg-sunken);
@@ -225,7 +232,20 @@ button {
 }
 button:hover { filter: brightness(1.1); }
 button:focus-visible { outline: 3px solid var(--info); outline-offset: 2px; }
-button[disabled] { opacity: 0.55; cursor: not-allowed; }
+/* NOT `opacity`. Fading a control drops its label below 4.5:1 — the guided
+   shell's Next buttons measured 3.60:1 that way — and the only thing that let
+   that pass was WCAG 1.4.3's exemption for inactive components, which is a reason
+   not to be measured rather than a reason to be readable. An explicit muted
+   palette says "you cannot press this" just as clearly and keeps the words
+   legible, which matters here because a disabled Next also NAMES the step it
+   would go to. */
+button[disabled] {
+  color: var(--text-muted);
+  background: var(--bg-sunken);
+  border-color: var(--border-strong);
+  cursor: not-allowed;
+}
+button[disabled]:hover { filter: none; }
 button.secondary {
   color: var(--text);
   background: transparent;
@@ -385,7 +405,10 @@ summary:focus-visible { outline: 3px solid var(--info); outline-offset: 2px; }
 
 .source-tag {
   display: inline-block;
-  font-size: 0.72rem;
+  /* A source tag carries a citation — "GM/T 0044.5 Annex A" is content, not
+     decoration — so it sits at or above the 12 CSS pixel floor e2e/geometry.spec.ts
+     enforces, tracking and small caps notwithstanding. */
+  font-size: 0.78rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-muted);
@@ -412,3 +435,305 @@ body :is(#theme-toggle, #themeToggle, .theme-toggle, .theme-toggle-btn, [data-th
 @media (prefers-reduced-motion: reduce) {
   * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
 }
+
+
+/* ---------- the guided lab: rail, steps, locks ---------- */
+
+/* A class rule that sets `display` outranks the UA's `[hidden]` rule, and this
+   stylesheet sets `display` on several of the things the shell hides. Declared
+   once, here, so a pane cannot paint while the code believes it is hidden. */
+[hidden] { display: none !important; }
+
+.lab-rail {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1.25rem;
+  padding: 0.6rem 0.9rem;
+  margin: 0 0 1rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  /* Opaque, not a tint: it is sticky below, and a translucent bar over scrolling
+     hex is unreadable — and unmeasurable, because nothing resolves behind it. */
+  background: var(--bg-raised);
+}
+
+.rail-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  counter-reset: none;
+}
+
+.rail-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text-dim);
+  text-decoration: none;
+  font-size: 0.86rem;
+}
+.rail-step:hover { color: var(--text); border-color: var(--border-strong); }
+.rail-step:focus-visible { outline: 3px solid var(--info); outline-offset: 2px; }
+.rail-step.is-current {
+  color: var(--text);
+  border-color: var(--accent);
+  background: color-mix(in oklab, var(--accent) 12%, transparent);
+}
+.rail-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.3rem;
+  height: 1.3rem;
+  border-radius: 50%;
+  border: 1px solid var(--border-strong);
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+.rail-step.is-done .rail-num { border-color: var(--ok); color: var(--ok); }
+.rail-name { font-weight: 600; }
+.rail-state .status { font-size: 0.78rem; padding: 0.05rem 0.35rem; }
+
+.lab-rail-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; }
+
+/* Sticky only where there is room for it. At phone width the rail wraps onto
+   three rows, and three rows of chrome pinned over a 844px viewport costs more
+   than it gives. */
+@media (min-width: 900px) {
+  .lab-rail { position: sticky; top: 0; z-index: 5; }
+  .lab-step { scroll-margin-top: 7.5rem; }
+}
+.lab-step { scroll-margin-top: 1rem; }
+
+.lab-live {
+  margin: 0 0 1rem;
+  padding: 0.5rem 0.8rem;
+  border-left: 3px solid var(--accent);
+  background: color-mix(in oklab, var(--accent) 10%, transparent);
+  color: var(--text);
+  font-size: 0.9rem;
+}
+/* An empty status region must not paint a bar with nothing in it — but it must
+   still EXIST. `display: none` takes a live region out of the accessibility tree,
+   and a region that is absent when the page loads is a region whose first
+   announcement several screen readers never make. Zeroing the box keeps it
+   rendered and silent. */
+.lab-live:empty { margin: 0; padding: 0; border-left-width: 0; }
+
+.lab-preamble { margin: 0 0 1.25rem; }
+.limits { margin: 0.6rem 0; padding-left: 1.2rem; color: var(--text-dim); max-width: 78ch; }
+.limits li { margin-bottom: 0.5rem; min-width: 0; }
+/* A source path or a constant name is one long token with no break opportunity,
+   and a single 90-character one pushed a 380px viewport 351px past its own edge.
+   Nothing here is wide enough to earn a scroller, so it wraps. */
+.path { overflow-wrap: anywhere; word-break: break-all; font-size: 0.86em; color: var(--text); }
+.limits strong { color: var(--text); }
+
+.transcript-json {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  resize: vertical;
+}
+
+.step-lock {
+  border: 1px dashed var(--border-strong);
+  border-radius: 12px;
+  padding: 1rem 1.1rem;
+  margin: 0 0 1.5rem;
+  background: var(--bg-sunken);
+}
+.step-lock p { margin: 0.6rem 0 0.9rem; color: var(--text-dim); max-width: 74ch; }
+.step-lock-actions { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+
+.step-done {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.7rem 0.9rem;
+  margin: 0 0 1rem;
+  background: var(--bg-raised);
+}
+.step-done-line { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; }
+.step-done-text { color: var(--text-dim); font-size: 0.9rem; flex: 1 1 18rem; min-width: 0; }
+
+.step-nav { margin: 0 0 1.75rem; }
+.step-nav-inner { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; }
+
+/* ---------- segmented control (a fieldset of radios) ---------- */
+
+.segmented { border: 0; margin: 0; padding: 0; min-width: 0; }
+.segmented legend { padding: 0; font-size: 0.85rem; color: var(--text-dim); }
+.seg-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.25rem;
+  padding: 0.25rem;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--bg-sunken);
+}
+.seg-option {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 0.45rem;
+  padding: 0.35rem 0.6rem;
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  min-width: 0;
+}
+.seg-option:hover { background: color-mix(in oklab, var(--accent) 8%, transparent); }
+.seg-option:has(input:checked) {
+  background: color-mix(in oklab, var(--accent) 16%, transparent);
+  color: var(--text);
+}
+.seg-body { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.3rem; min-width: 0; }
+.seg-label { font-weight: 600; }
+.seg-hint { color: var(--text-muted); font-size: 0.78rem; }
+
+/* A UA-painted radio computes to no background and no border, which is a WCAG
+   1.4.11 failure the accessibility gate measures directly (axe implements no rule
+   for it). Painting it here is what makes the boundary measurable. */
+.segmented input[type="radio"] {
+  appearance: none;
+  flex: 0 0 auto;
+  width: 1rem;
+  height: 1rem;
+  margin: 0.15rem 0 0;
+  border: 1px solid var(--border-strong);
+  border-radius: 50%;
+  background: var(--bg-sunken);
+}
+.segmented input[type="radio"]:checked {
+  border-color: var(--accent);
+  background: var(--accent);
+  box-shadow: inset 0 0 0 3px var(--bg-sunken);
+}
+.segmented input[type="radio"]:focus-visible { outline: 3px solid var(--info); outline-offset: 2px; }
+
+/* ---------- tabs ---------- */
+
+.tablist {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0 0 1rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.5rem;
+}
+.tab {
+  color: var(--text-dim);
+  background: transparent;
+  border: 1px solid var(--border-strong);
+  font-size: 0.86rem;
+  font-weight: 600;
+  padding: 0.4rem 0.7rem;
+  text-align: left;
+}
+.tab:hover { color: var(--text); }
+.tab.is-selected { color: var(--bg); background: var(--accent); border-color: var(--accent); }
+.tabpanel { min-width: 0; }
+.tabpanel:focus-visible { outline: 3px solid var(--info); outline-offset: 4px; }
+
+/* ---------- flows and figures (what the SVG diagrams became) ---------- */
+
+.fig { margin: 0.9rem 0; }
+.fig figcaption {
+  margin-top: 0.5rem;
+  color: var(--text-muted);
+  font-size: 0.84rem;
+  max-width: 74ch;
+}
+
+.flow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+  gap: 0.6rem;
+  list-style: none;
+  margin: 0.6rem 0;
+  padding: 0;
+}
+.flow-step {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-raised);
+  min-width: 0;
+}
+.flow-op { color: var(--accent); font-size: 0.78rem; font-weight: 700; }
+.flow-op-glyph { margin-right: 0.3rem; }
+.flow-term { font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace; overflow-wrap: anywhere; }
+.flow-hint { color: var(--text-muted); font-size: 0.8rem; }
+.flow-slot { min-width: 0; }
+
+/* ---------- the extraction relation, filled one line at a time ---------- */
+
+.relation {
+  list-style: none;
+  margin: 0.8rem 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+.relation-line {
+  display: grid;
+  gap: 0.25rem 1.2rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-sunken);
+  min-width: 0;
+}
+.relation-line.is-filled { border-left-color: var(--accent); }
+/* Motion marks the operation being performed and nothing else. The values are
+   already computed when this runs — the stagger renders finished work in the
+   order the standard performs it, and never pretends to be the work. */
+.relation-line.is-active { animation: relation-mark 320ms ease-out; }
+@keyframes relation-mark {
+  from { border-left-color: var(--info); background: color-mix(in oklab, var(--info) 14%, var(--bg-sunken)); }
+  to { border-left-color: var(--accent); background: var(--bg-sunken); }
+}
+.relation-desc { display: grid; gap: 0.2rem; min-width: 0; }
+@media (min-width: 62rem) {
+  .relation-line { grid-template-columns: 24rem 1fr; align-items: start; }
+}
+.relation-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.5rem; min-width: 0; }
+.relation-op {
+  flex: 0 0 auto;
+  color: var(--accent);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.relation-op-first { color: var(--text-muted); }
+.relation-term {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.relation-hint { color: var(--text-muted); font-size: 0.82rem; }
+.relation-slot { min-width: 0; }
+.relation-pending { color: var(--text-muted); font-size: 0.9rem; }
+.relation-master { margin-top: 0.8rem; }
+
+.questions { margin: 0.6rem 0; }

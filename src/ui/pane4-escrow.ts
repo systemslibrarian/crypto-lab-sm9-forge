@@ -38,7 +38,9 @@ import { decrypt, encrypt } from '../sm9/encrypt';
 import annexA from '../sm9/fixtures/annexA-fixture.json';
 import annexCD from '../sm9/fixtures/sm9-annex-cd-fixtures.json';
 import {
+  box,
   button,
+  clear,
   controls,
   decodeUtf8,
   defer,
@@ -55,15 +57,18 @@ import {
   para,
   replace,
   setVerdict,
+  sideBySide,
   statusPill,
   textInput,
   verdictSlot,
 } from './dom';
 
+import type { Exhibit, ExhibitHost } from './exhibit';
+
 const KS = BigInt(`0x${annexA.signature.ks}`);
 const KE = BigInt(`0x${annexCD.annex_C_kem.master_encryption_private_key_ke}`);
 
-export function buildPane4(): HTMLElement {
+export function buildPane4(host: ExhibitHost): Exhibit {
   const { root, body } = pane(
     'PANE 4',
     'What the KGC can do',
@@ -85,6 +90,25 @@ export function buildPane4(): HTMLElement {
   const messageInput = textInput('Meet me at the usual place at nine.', 'p4-message', 38);
   const readButton = button('KGC: derive the decryption key and read it', 'p4-run-read', 'danger');
   const signButton = button('KGC: derive the signing key and sign as this identity', 'p4-run-sign', 'danger');
+
+  /**
+   * Both powers, or the step is not done.
+   *
+   * The pane's claim is that the KGC holds TWO capabilities from the same two
+   * lines of arithmetic. A step that completed on the first of them would let a
+   * reader move on having seen half the finding.
+   */
+  const performed = { read: false, sign: false };
+  function reportBoth(): void {
+    if (performed.read && performed.sign) {
+      host.onComplete(
+        'the KGC read a message encrypted to an identity it does not hold, and signed as that same '
+          + 'identity — both accepted by this page\'s own unmodified code',
+      );
+    } else {
+      host.onStale();
+    }
+  }
 
   const readVerdict = verdictSlot('p4-read-verdict', 'pending — the KGC has not derived anything yet');
   const readOut = el('div', { testid: 'p4-read-output' });
@@ -185,6 +209,8 @@ export function buildPane4(): HTMLElement {
           + 'master key. Revoking a compromised user key is therefore not possible either — the '
           + 'identity is the key, and the KGC can reissue it.',
       );
+      performed.read = recovered.ok;
+      reportBoth();
     });
   });
 
@@ -266,6 +292,8 @@ export function buildPane4(): HTMLElement {
           + 'non-repudiable against the KGC: the named signer can always say the authority did it, and '
           + 'nothing in the signature contradicts them.',
       );
+      performed.sign = checked.accepted;
+      reportBoth();
     });
   });
 
@@ -276,29 +304,35 @@ export function buildPane4(): HTMLElement {
     ]),
   );
 
-  body.appendChild(heading('Power one — with ke, the KGC reads'));
+  // SIDE BY SIDE, BECAUSE THE FINDING IS THAT THERE ARE TWO OF THEM. Stacked
+  // under two headings, the second power was a screen below the first and read as
+  // a variation on it. `.side-by-side` collapses to one column below 19rem, so on
+  // a phone these are still two focused acts, one after the other.
+  body.appendChild(heading('The two powers, from the same two lines of arithmetic'));
   body.appendChild(
-    para(
-      'A sender encrypts to the identity string below using only the master public key. The KGC then '
-        + 'derives that identity\'s decryption key from ke and decrypts. The receiver is not involved '
-        + 'and need not exist.',
-    ),
+    sideBySide([
+      box('Power one — with ke, the KGC reads', [
+        para(
+          'A sender encrypts to the identity string above using only the master public key. The KGC '
+            + 'then derives that identity\'s decryption key from ke and decrypts. The receiver is not '
+            + 'involved and need not exist.',
+        ),
+        controls([readButton]),
+        readVerdict,
+        readOut,
+      ], 'p4-power-read'),
+      box('Power two — with ks, the KGC signs as you', [
+        para(
+          'The same arithmetic on the other master key gives the other capability. The KGC derives the '
+            + 'identity\'s signing key, signs the statement above, and the signature is put to the same '
+            + 'verify() this page runs against GM/T 0044.5 Annex A.',
+        ),
+        controls([signButton]),
+        signVerdict,
+        signOut,
+      ], 'p4-power-sign'),
+    ]),
   );
-  body.appendChild(controls([readButton]));
-  body.appendChild(readVerdict);
-  body.appendChild(readOut);
-
-  body.appendChild(heading('Power two — with ks, the KGC signs as you'));
-  body.appendChild(
-    para(
-      'The same arithmetic on the other master key gives the other capability. The KGC derives the '
-        + 'identity\'s signing key, signs the statement above, and the signature is put to the same '
-        + 'verify() this page runs against GM/T 0044.5 Annex A.',
-    ),
-  );
-  body.appendChild(controls([signButton]));
-  body.appendChild(signVerdict);
-  body.appendChild(signOut);
 
   body.appendChild(
     note(
@@ -336,5 +370,15 @@ export function buildPane4(): HTMLElement {
     ),
   );
 
-  return root;
+  return {
+    root,
+    reset: () => {
+      performed.read = false;
+      performed.sign = false;
+      clear(readOut);
+      clear(signOut);
+      setVerdict(readVerdict, 'pending', 'pending — the KGC has not derived anything yet');
+      setVerdict(signVerdict, 'pending', 'pending — the KGC has not derived anything yet');
+    },
+  };
 }

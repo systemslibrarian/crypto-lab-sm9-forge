@@ -51,16 +51,23 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
  *     fails on either. A checker that could not look must say so; it is never
  *     permitted to express the gap as a clean result.
  *
- * WHAT IT DRIVES. The landing state is a small fraction of this lab, so the gate
- * runs the SM3 layer; extracts a key, then re-extracts for a different identity,
- * hid and master key pair; forces the t1 = 0 branch that refuses to issue a key;
- * signs and verifies Annex A on its pinned nonce and again on a fresh one; runs
- * the eight must-reject cases; extracts under a deliberately wrong H1; runs the
- * key exchange at hid 0x03 and then at BOTH hid values side by side; runs the
- * KEM and both encryption modes; exercises the KGC's two powers; recovers a
- * private key from a reused nonce and then drives the recovery's refusal path;
- * and finally opens every disclosure on the page. Every one of those states is
- * scanned, at 1280px and at 380px.
+ * WHAT IT DRIVES. The landing state is a small fraction of this lab, and since
+ * the shell gates the exhibits left to right the gate walks the SAME PATH A
+ * VISITOR WALKS rather than reaching past it: it runs the SM3 layer and watches
+ * step 2 unlock, extracts a key, switches the identity map to the altered one and
+ * back, re-extracts for a different identity, hid and master key pair, forces the
+ * t1 = 0 branch that refuses to issue a key, signs and verifies Annex A on its
+ * pinned nonce and again on a fresh one, runs the eight must-reject cases,
+ * extracts under a deliberately wrong H1, runs the key exchange at hid 0x03 and
+ * then at BOTH hid values side by side, runs the KEM and both encryption modes,
+ * exercises the KGC's two powers, recovers a private key from a reused nonce and
+ * drives the recovery's refusal path, and finally switches to Full evidence and
+ * opens every disclosure in every tab. Every one of those states is scanned, at
+ * 1280px and at 380px.
+ *
+ * THE LOCKED AND COLLAPSED STATES ARE SCANNED TOO. A lock panel, a collapsed
+ * one-line result and a rail full of status pills are rendering this page did not
+ * have before, and they are exactly the kind of chrome that ships unmeasured.
  */
 
 /** WCAG 2.0/2.1 level A and AA. Best-practice rules are deliberately not here. */
@@ -185,16 +192,25 @@ async function boot(page: Page): Promise<void> {
   expect(effective.reduced, 'emulateMedia did not take effect in the page').toBe(true);
   expect(effective.dark, 'the context is not being served as a dark-scheme client').toBe(true);
 
-  // The five exhibits and the closing note must all have mounted.
+  // The five exhibits and the closing note must all have MOUNTED. Only step 1 is
+  // expanded — the rest are behind the guided shell's locks — so presence is
+  // asserted by count and the landing state's own visibility is asserted below.
   for (const testid of ['p1-pane', 'p2-pane', 'p3-pane', 'p4-pane', 'p5-pane', 'security-note']) {
-    await expect(page.locator(`[data-testid="${testid}"]`), `${testid} did not mount`).toBeVisible();
+    await expect(page.locator(`[data-testid="${testid}"]`), `${testid} did not mount`).toHaveCount(1);
   }
+  await expect(page.locator('[data-testid="p1-pane"]')).toBeVisible();
+  await expect(page.locator('[data-testid="lab-rail"]')).toBeVisible();
+  await expect(page.locator('[data-testid="lab-rail-steps"] > li')).toHaveCount(5);
 
-  // Pane 1 paints the parameter set statically; pane 2 runs one extraction on
-  // load. Both are shipped defaults, so both are asserted rather than assumed.
+  // THE SHIPPED DEFAULT IS THAT NOTHING HAS BEEN COMPUTED. Asserted, because it
+  // is the property the guided shell exists to produce: the page used to run an
+  // extraction on load, and a gate that still waited for one would be waiting for
+  // the bug. The parameter set is painted statically and folded, so it is checked
+  // for content rather than for visibility.
   await expect(page.locator('[data-testid="p1-param-q"]')).not.toBeEmpty();
-  await expect(page.locator('[data-testid="p2-step-key"]')).toBeVisible();
-  await expect(page.locator('[data-testid="p2-extract-verdict"]')).toContainText('ds_A issued in G1');
+  await expect(page.locator('[data-testid="p1-sm3-summary"]')).toContainText('pending');
+  await expect(page.locator('[data-testid="p2-extract-verdict"] .verdict-pending')).toHaveCount(1);
+  await expect(page.locator('[data-testid="p2-extract"]')).not.toBeVisible();
 
   await settle(page);
 }
@@ -1006,6 +1022,29 @@ async function openDisclosure(page: Page, testid: string): Promise<void> {
   await expect(details).toHaveAttribute('open', '');
 }
 
+/** Select one tab of a tab set, the way a reader does. */
+async function selectTab(page: Page, id: string): Promise<void> {
+  await byTestId(page, `tab-${id}`).click();
+  await expect(byTestId(page, `tab-${id}`)).toHaveAttribute('aria-selected', 'true');
+}
+
+/**
+ * Open every disclosure in every tab of every tab set.
+ *
+ * A `<details>` inside an unselected tab panel cannot be clicked, so a single
+ * sweep would leave two thirds of pane 3 and half of pane 5 unscanned while
+ * reporting that it had opened everything. Each tab is selected in turn and swept.
+ */
+async function openEveryDisclosureInEveryTab(page: Page): Promise<number> {
+  let opened = 0;
+  for (const id of ['p3a', 'p3b', 'p3c', 'p5a', 'p5b']) {
+    await selectTab(page, id);
+    opened += await openEveryDisclosure(page);
+  }
+  opened += await openEveryDisclosure(page);
+  return opened;
+}
+
 /**
  * Open every remaining disclosure, by clicking summaries.
  *
@@ -1039,76 +1078,141 @@ async function openEveryDisclosure(page: Page): Promise<number> {
  * value inside an existing shape is rewritten.
  */
 async function driveAllStates(page: Page, label: string, tally: RunTally): Promise<void> {
-  await scan(page, `${label} / arrival`, tally);
+  await scan(page, `${label} / arrival — step 1 open, four steps locked`, tally);
 
-  // --- pane 1: the SM3 layer, and the seven-column vector table it paints -----
-  await press(page, 'p1-run-sm3', 'p1-sm3-table');
+  // --- step 1: the SM3 layer, and the seven-column vector table it folds -----
+  // The ready signal is the summary PILL, not the table: the table now ships one
+  // disclosure away, so a step that waited for it to be visible would be waiting
+  // for a click nobody made.
+  await press(page, 'p1-run-sm3', 'p1-sm3-status');
   await expect(byTestId(page, 'p1-sm3-failed')).toHaveText(/^0 failed$/);
-  await scan(page, `${label} / pane 1 SM3 vectors run`, tally);
+  await expect(byTestId(page, 'rail-state-extract')).toContainText('ready');
+  await scan(page, `${label} / step 1 run, step 2 unlocked`, tally);
 
-  // --- pane 2: a second extraction, then the branch that refuses to issue -----
+  await openDisclosure(page, 'p1-sm3-rows');
+  await openDisclosure(page, 'p1-parameter-details');
+  await openDisclosure(page, 'p1-identifier-details');
+  await scan(page, `${label} / step 1 evidence expanded`, tally);
+
+  // --- step 2: the relation, then the decisive experiment --------------------
+  await byTestId(page, 'next-sm3').click();
+  await expect(byTestId(page, 'p2-extract')).toBeVisible();
+  await expect(byTestId(page, 'done-line-sm3')).toBeVisible();
+  await scan(page, `${label} / step 1 collapsed to its one line, step 2 open`, tally);
+
+  await press(page, 'p2-extract', 'p2-questions-table');
+  await expect(byTestId(page, 'p2-line-key')).toHaveClass(/is-filled/);
+  await expect(byTestId(page, 'p2-extract-verdict')).toContainText('ds_A issued in G1');
+  await scan(page, `${label} / step 2 extracted under SM9's own H1`, tally);
+
+  // The altered map: an ALARM verdict beside a table whose rows disagree with
+  // each other on purpose, which is a tone this page renders nowhere else.
+  await byTestId(page, 'p2-map-altered').check();
+  await expect(byTestId(page, 'p2-q-samekey')).toContainText('DIFFERENT key');
+  await expect(byTestId(page, 'p2-line-key')).toHaveClass(/is-filled/);
+  await scan(page, `${label} / step 2 under an altered identity map`, tally);
+  await byTestId(page, 'p2-map-standard').check();
+  await expect(byTestId(page, 'p2-line-key')).toHaveClass(/is-filled/);
+
+  // A second extraction, on the other side of the mirror.
   await byTestId(page, 'p2-identity').fill('Bob');
   await byTestId(page, 'p2-hid').selectOption('3');
   await byTestId(page, 'p2-master').selectOption('encryption');
-  await press(page, 'p2-extract', 'p2-step-key');
+  await press(page, 'p2-extract', 'p2-questions-table');
   await expect(byTestId(page, 'p2-extract-verdict')).toContainText('de_B issued in G2');
-  await scan(page, `${label} / pane 2 encryption key for Bob at hid 0x03`, tally);
+  await scan(page, `${label} / step 2 encryption key for Bob at hid 0x03`, tally);
 
   // The t1 = 0 refusal: an alarm verdict, which is a rendering no other state
   // on this page produces.
+  await openDisclosure(page, 'p2-t1zero-details');
   await press(page, 'p2-force-t1zero', 'p2-rekey-outcome');
   await expect(byTestId(page, 'p2-rekey-outcome')).toHaveText('MASTER-KEY-REGENERATION-REQUIRED');
-  await scan(page, `${label} / pane 2 t1 = 0 refusal`, tally);
+  await scan(page, `${label} / step 2 t1 = 0 refusal`, tally);
 
-  // --- pane 3 act (a): sign, verify, the negatives, and the wrong-H1 case -----
-  await openDisclosure(page, 'p3a-details');
+  // Re-extract so step 2 is complete again: the refusal issues no key, so it
+  // retires the step and step 3 goes back behind its lock.
+  await byTestId(page, 'p2-identity').fill('Alice');
+  await byTestId(page, 'p2-hid').selectOption('1');
+  await byTestId(page, 'p2-master').selectOption('signature');
+  await press(page, 'p2-extract', 'p2-questions-table');
+  await expect(byTestId(page, 'rail-state-protocols')).toContainText('ready');
+
+  // --- step 3 act (a): sign, verify, the negatives, and the wrong-H1 case -----
+  await byTestId(page, 'next-extract').click();
+  await expect(byTestId(page, 'p3a-run')).toBeVisible();
   await press(page, 'p3a-run', 'p3a-verify-status');
+  await openDisclosure(page, 'p3a-fresh-details');
   await press(page, 'p3a-fresh-r', 'p3a-fresh-verify-status');
-  await scan(page, `${label} / pane 3a signed on the pinned r and on a fresh r`, tally);
+  await scan(page, `${label} / step 3a signed on the pinned r and on a fresh r`, tally);
 
+  await openDisclosure(page, 'p3a-negatives-details');
   await press(page, 'p3a-run-negatives', 'p3a-negatives-table');
+  await openDisclosure(page, 'p3a-wrongh1-details');
   await press(page, 'p3a-wrongh1-run', 'p3a-wrongh1-verdict');
-  await scan(page, `${label} / pane 3a eight must-reject cases and the wrong-H1 acceptance`, tally);
+  await scan(page, `${label} / step 3a eight must-reject cases and the wrong-H1 acceptance`, tally);
 
-  // --- pane 3 act (b): the key exchange, at the annex's hid -------------------
-  await openDisclosure(page, 'p3b-details');
+  // --- step 3 act (b): the key exchange, at the annex's hid -------------------
+  await selectTab(page, 'p3b');
   await press(page, 'p3b-run', 'p3b-agree');
   await expect(byTestId(page, 'p3b-confirm-bta')).toContainText('confirmed B');
-  await scan(page, `${label} / pane 3b key exchange at hid 0x03`, tally);
+  await scan(page, `${label} / step 3b key exchange at hid 0x03`, tally);
 
-  // --- pane 3 act (c): the KEM, then both encryption modes -------------------
-  await openDisclosure(page, 'p3c-details');
+  // --- step 3 act (c): the KEM, then both encryption modes -------------------
+  await selectTab(page, 'p3c');
   await press(page, 'p3c-run-kem', 'p3c-kem-badge');
-  await scan(page, `${label} / pane 3c key encapsulation`, tally);
+  await scan(page, `${label} / step 3c key encapsulation`, tally);
 
   await press(page, 'p3c-run-pke', 'p3c-pke-inputs');
-  await scan(page, `${label} / pane 3c encryption in both modes`, tally);
+  await scan(page, `${label} / step 3c encryption in both modes`, tally);
 
-  // --- pane 4: the KGC's two powers, both rendered as alarms ------------------
+  // --- step 4: the KGC's two powers, both rendered as alarms ------------------
+  await byTestId(page, 'next-protocols').click();
+  await expect(byTestId(page, 'p4-run-read')).toBeVisible();
   await press(page, 'p4-run-read', 'p4-read-match');
   await press(page, 'p4-run-sign', 'p4-sign-accepted');
-  await scan(page, `${label} / pane 4 the KGC reads and signs`, tally);
+  await scan(page, `${label} / step 4 the KGC reads and signs`, tally);
 
-  // --- pane 5 (a): the reused-nonce recovery, then its refusal path -----------
-  await press(page, 'p5a-run', 'p5a-recovered-matches');
-  await expect(byTestId(page, 'p5a-forged-accepted')).toBeVisible();
-  await scan(page, `${label} / pane 5a key recovered from a reused nonce`, tally);
+  // --- step 5 (a): the reused-nonce recovery, then its refusal path -----------
+  await byTestId(page, 'next-kgc').click();
+  await expect(byTestId(page, 'p5a-run')).toBeVisible();
+  // The RESULT is what this act now leads with; the recovery that produced it is
+  // one disclosure down. Waiting on a signal inside that disclosure would be
+  // waiting for a click nobody made.
+  await press(page, 'p5a-run', 'p5a-forged-accepted');
+  await scan(page, `${label} / step 5a a forged signature the real verifier accepted`, tally);
+
+  await openDisclosure(page, 'p5a-derivation');
+  await expect(byTestId(page, 'p5a-recovered-matches')).toBeVisible();
+  await scan(page, `${label} / step 5a the recovery that produced it`, tally);
 
   await press(page, 'p5a-refusal-run', 'p5a-refusal-reason');
-  await scan(page, `${label} / pane 5a the recovery refusing a singular system`, tally);
+  await scan(page, `${label} / step 5a the recovery refusing a singular system`, tally);
 
-  // --- pane 5 (b): the key exchange at BOTH hid values ------------------------
+  // --- step 5 (b): the key exchange at BOTH hid values ------------------------
+  await selectTab(page, 'p5b');
   await press(page, 'p5b-run', 'p5b-g-identical');
   await expect(byTestId(page, 'p5b-sk-0x03')).toBeVisible();
   await expect(byTestId(page, 'p5b-sk-0x02')).toBeVisible();
   await expect(byTestId(page, 'p5b-literal-verdict')).toBeVisible();
-  await scan(page, `${label} / pane 5b key exchange at hid 0x03 and hid 0x02`, tally);
+  await scan(page, `${label} / step 5b key exchange at hid 0x03 and hid 0x02`, tally);
 
-  // --- everything open -------------------------------------------------------
-  const opened = await openEveryDisclosure(page);
+  // --- everything open, in the expert surface --------------------------------
+  await byTestId(page, 'lab-view-full').check();
+  // Two panes with no tab set of their own, so their controls being on screen is
+  // evidence the LOCKS are gone rather than evidence about which tab is selected.
+  await expect(byTestId(page, 'p1-run-sm3')).toBeVisible();
+  await expect(byTestId(page, 'p4-run-read')).toBeVisible();
+  const opened = await openEveryDisclosureInEveryTab(page);
   expect(opened, 'no disclosure was opened, so the expanded state was never scanned').toBeGreaterThan(0);
-  await expect(page.locator('details:not([open])')).toHaveCount(0);
-  await scan(page, `${label} / every disclosure open (${opened} opened)`, tally);
+  // Only VISIBLE disclosures can be judged: a `<details>` inside an unselected
+  // tab panel is not reachable by a reader either, which is the same fact.
+  await expect(page.locator('details:not([open]) > summary:visible')).toHaveCount(0);
+  await scan(page, `${label} / full evidence, every disclosure open (${opened} opened)`, tally);
+
+  // And the transcript, which renders a textarea nothing else on the page does.
+  await byTestId(page, 'lab-transcript').click();
+  await expect(byTestId(page, 'lab-transcript-json')).toBeVisible();
+  await scan(page, `${label} / the run transcript rendered`, tally);
 }
 
 // ---------------------------------------------------------------------------

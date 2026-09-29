@@ -49,7 +49,7 @@
       ]
     },
     "hid-0x02": {
-      "name": "GmSSL / emmansun/gmsm / (reportedly) Bouncy Castle",
+      "name": "GmSSL / emmansun/gmsm / Bouncy Castle",
       "kind": "implementation convention",
       "declared_at": "gmssl-sm9.h:31  #define SM9_HID_EXCH 0x02 ; vend/kat.go KATKeyExchangeSample hid := byte(0x02)",
       "published_SK": "c5c13a8f59a97cdeae64f16a2272a9e7",

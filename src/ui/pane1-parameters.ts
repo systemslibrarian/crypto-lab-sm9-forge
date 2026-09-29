@@ -13,6 +13,14 @@
  * property is the negative one: 30 vectors reproduced, and the elliptic curve
  * has not been involved in any of them.
  *
+ * WHY THE ACTION COMES BEFORE THE PARAMETER DUMP. This panel used to open with
+ * twelve rows of BN256 constants and a five-row identifier table, which put the
+ * first button on the page two thousand pixels down and asked the reader to
+ * inspect a parameter set before they had any reason to care what it was for.
+ * The constants have not moved out of the lab — they are one disclosure away,
+ * where a reader who wants to check q against the formula printed beside it can
+ * still reach every nibble. They are no longer the first thing anybody meets.
+ *
  * EVERY FIGURE ON THIS PANEL IS DERIVED FROM THE RUN OR FROM THE FIXTURE'S OWN
  * INPUTS. The SM3 message length and block count come back from hash.ts's own
  * result for H1 and H2, and are recomputed the same way for the KDF, which
@@ -37,6 +45,7 @@ import {
 } from '../sm9/params';
 import { toFieldHex } from '../sm9/extract';
 import hashVectorsJson from '../sm9/fixtures/sm9-hash-vectors.json';
+import type { Exhibit, ExhibitHost } from './exhibit';
 import {
   button,
   clear,
@@ -44,7 +53,6 @@ import {
   defer,
   detailsEl,
   el,
-  heading,
   hexBlock,
   kv,
   matchMark,
@@ -305,7 +313,7 @@ function vectorRow(run: VectorRun): HTMLElement[] {
   ];
 }
 
-export function buildPane1(): HTMLElement {
+export function buildPane1(host: ExhibitHost): Exhibit {
   const { root, body } = pane(
     'PANE 1',
     'Parameters, and the SM3 layer',
@@ -315,67 +323,17 @@ export function buildPane1(): HTMLElement {
 
   body.appendChild(
     para(
-      'Identity-based cryptography makes a promise: your name is your public key. There is no '
-        + 'certificate to fetch and no directory to trust, because anybody who knows the system '
-        + 'parameters can compute a public point for the string "Alice" without asking Alice or '
-        + 'anybody else. What that buys in convenience it pays for in structure — somebody has to '
-        + 'mint the matching private key.',
-    ),
-  );
-  body.appendChild(
-    para(
-      'That somebody is the KGC, the Key Generation Centre. It holds a master private key, and it '
-        + 'derives every user\'s private key from that master key and the user\'s name. SM9 gives the '
-        + 'KGC two master keys rather than one — a signature master key and an encryption master key '
-        + '— which is what lets pane 4 show the two powers separately.',
+      'Identity-based cryptography makes a promise: your name is your public key. Nobody fetches a '
+        + 'certificate, because anybody holding the system parameters can compute a public point for '
+        + 'the string "Alice" without asking Alice. What that buys in convenience it pays for in '
+        + 'structure — somebody has to mint the matching private key, and everything H1 touches on the '
+        + 'way there is pure SM3. Check that first.',
     ),
   );
 
-  body.appendChild(heading('The BN256 parameter set'));
-  body.appendChild(
-    para(
-      'Read out of the official GM/T 0044.5-2016 text. The defining formulas are printed in the '
-        + 'standard alongside the values, so src/sm9/params.test.ts recomputes q, N and the trace '
-        + 'from t rather than trusting the transcription.',
-    ),
-  );
-  body.appendChild(parameterTable());
-
-  body.appendChild(heading('The two identifier bytes, decoded'));
-  body.appendChild(identifierTable());
-
-  body.appendChild(heading('Run the SM3 layer'));
   const profile = inputProfile();
-  body.appendChild(
-    note(
-      [
-        el('strong', { text: 'No pairing runs on this panel, and that is the point. ' }),
-        'H1, H2 and the KDF are SM3 and nothing else — no curve arithmetic, no field extension, no '
-          + 'pairing. If this layer disagrees with the annexes then every pairing downstream is '
-          + 'operating on the wrong bytes, and no amount of curve work will say so. It is the '
-          + 'cheapest honest check in the lab, so it is the first one.',
-      ],
-      false,
-      'p1-no-pairing-note',
-    ),
-  );
-  body.appendChild(
-    note(
-      [
-        el('strong', { text: 'What the standard does not exercise. ' }),
-        `Every H1 input the annexes print is ${profile.annexH1Min} to ${profile.annexH1Max} bytes long — an identity `
-          + `plus its one hid byte — and ${profile.annexSingleBlock} of those ${profile.annexH1Total} fit in a single 64-byte SM3 block. `
-          + `The multi-block path is therefore never tested by the standard's own vectors. `
-          + `The ${profile.generatedH1} vectors marked "generated here", of which ${profile.generatedMultiBlock} span more than one block, `
-          + 'were built for that gap and cross-checked against OpenSSL\'s SM3 and against GmSSL C\'s '
-          + 'compiled sm9_z256_hash1 — two codebases sharing no line with this one.',
-      ],
-      false,
-      'p1-blocks-note',
-    ),
-  );
 
-  const runButton = button('Run all SM3 vectors', 'p1-run-sm3');
+  const runButton = button('Run the SM3 checks', 'p1-run-sm3');
   const summary = el('div', { testid: 'p1-sm3-summary' }, [
     statusPill('pending', 'pending — not yet run'),
   ]);
@@ -424,24 +382,96 @@ export function buildPane1(): HTMLElement {
         el('span', { text: '0 pairings', testid: 'p1-sm3-pairings' }),
       ]);
 
+      // THE HEADLINE FIRST, THE THIRTY-ONE ROWS ONE CLICK AWAY. The table is the
+      // evidence and it stays reachable in full; it is not what a reader needs in
+      // front of them to know what just happened. Only the summary above is.
       replace(results, [
-        tableEl(
-          ['Vector', 'Function', 'Source', 'Z bytes', 'SM3 message bytes', '64-byte blocks', 'Result'],
-          // The negative control is rendered as a row like any other, so its printed
-          // values can be compared against its badge exactly as the real vectors are.
-          // Keeping it as a summary pill only left it unfalsifiable: a mutation that
-          // printed the expected value in place of the computed one changed nothing
-          // any test could see, because no rendered row disagreed with itself.
-          [...runs, control].map(vectorRow),
-          'p1-sm3-table',
-          'Every SM3 layer vector, with its result',
+        note(
+          [
+            el('strong', { text: 'What the standard does not exercise. ' }),
+            `Every H1 input the annexes print is ${profile.annexH1Min} to ${profile.annexH1Max} bytes long — an identity `
+              + `plus its one hid byte — and ${profile.annexSingleBlock} of those ${profile.annexH1Total} fit in a single 64-byte SM3 block. `
+              + `The multi-block path is therefore never tested by the standard's own vectors. `
+              + `The ${profile.generatedH1} vectors marked "generated here", of which ${profile.generatedMultiBlock} span more than one block, `
+              + 'were built for that gap and cross-checked against OpenSSL\'s SM3 and against GmSSL C\'s '
+              + 'compiled sm9_z256_hash1 — two codebases sharing no line with this one.',
+          ],
+          false,
+          'p1-blocks-note',
+        ),
+        detailsEl(
+          `Inspect all ${runs.length + 1} vector rows, with every expected and computed value`,
+          [
+            tableEl(
+              ['Vector', 'Function', 'Source', 'Z bytes', 'SM3 message bytes', '64-byte blocks', 'Result'],
+              // The negative control is rendered as a row like any other, so its printed
+              // values can be compared against its badge exactly as the real vectors are.
+              // Keeping it as a summary pill only left it unfalsifiable: a mutation that
+              // printed the expected value in place of the computed one changed nothing
+              // any test could see, because no rendered row disagreed with itself.
+              [...runs, control].map(vectorRow),
+              'p1-sm3-table',
+              'Every SM3 layer vector, with its result',
+            ),
+          ],
+          'p1-sm3-rows',
         ),
       ]);
+
+      // The step is complete only when the run agreed AND the negative control
+      // disagreed. A page that unlocked on "the button was pressed" would unlock
+      // on a failure as readily as on a pass.
+      if (failed === 0 && !control.passed) {
+        host.onComplete(
+          `${published.filter((r) => r.passed).length}/${published.length} published vectors reproduced · `
+            + `${generated.filter((r) => r.passed).length}/${generated.length} generated for the multi-block gap · `
+            + 'negative control correctly reported as a mismatch · 0 pairings',
+        );
+      } else {
+        host.onStale();
+      }
     });
   });
 
   body.appendChild(controls([runButton, summary]));
+  body.appendChild(
+    note(
+      [
+        el('strong', { text: 'No pairing runs on this panel, and that is the point. ' }),
+        'H1, H2 and the KDF are SM3 and nothing else — no curve arithmetic, no field extension, no '
+          + 'pairing. If this layer disagrees with the annexes then every pairing downstream is '
+          + 'operating on the wrong bytes, and no amount of curve work will say so. It is the '
+          + 'cheapest honest check in the lab, so it is the first one, and the count of pairings it '
+          + 'performed is reported beside its result above.',
+      ],
+      false,
+      'p1-no-pairing-note',
+    ),
+  );
   body.appendChild(results);
+
+  body.appendChild(
+    detailsEl(
+      'Inspect the BN256 parameter set',
+      [
+        para(
+          'Read out of the official GM/T 0044.5-2016 text. The defining formulas are printed in the '
+            + 'standard alongside the values, so src/sm9/params.test.ts recomputes q, N and the trace '
+            + 'from t rather than trusting the transcription.',
+        ),
+        parameterTable(),
+      ],
+      'p1-parameter-details',
+    ),
+  );
+
+  body.appendChild(
+    detailsEl(
+      'Inspect the identifier bytes, decoded into words',
+      [identifierTable()],
+      'p1-identifier-details',
+    ),
+  );
 
   body.appendChild(
     detailsEl(
@@ -451,8 +481,8 @@ export function buildPane1(): HTMLElement {
           'H1 and H2 are one construction separated by a single leading byte — 0x01 for H1, 0x02 for '
             + 'H2. For SM9\'s 256-bit N the standard\'s hlen works out to 320 bits, so each is exactly '
             + 'two SM3 calls concatenated and truncated to 40 bytes, then reduced into [1, N-1]. The '
-            + '"SM3 message bytes" column above is 1 + |Z| + 4: the domain byte, the input, and the '
-            + 'four-byte counter that the chain increments.',
+            + '"SM3 message bytes" column in the table above is 1 + |Z| + 4: the domain byte, the '
+            + 'input, and the four-byte counter that the chain increments.',
         ),
         para(
           'The KDF is a different function in a different part of the standard — GM/T 0044.3 clause '
@@ -463,5 +493,11 @@ export function buildPane1(): HTMLElement {
     ),
   );
 
-  return root;
+  return {
+    root,
+    reset: () => {
+      replace(summary, [statusPill('pending', 'pending — not yet run')]);
+      clear(results);
+    },
+  };
 }
