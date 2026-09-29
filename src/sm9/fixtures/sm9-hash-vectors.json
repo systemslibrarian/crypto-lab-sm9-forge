@@ -1,0 +1,681 @@
+{
+  "title": "SM9 hash-layer test vectors (H1, H2, KDF)",
+  "generated_utc": "2026-09-29T12:09:05.030Z",
+  "standard": {
+    "name": "GM/T 0044.5-2016 Annex A-D",
+    "md5": "40cee7ca9ab2b885dee2158b2d4a12cc",
+    "fetched_from": "gmbz.org.cn"
+  },
+  "clauses": {
+    "H1": "GM/T 0044.4 §5.4.2.2",
+    "H2": "GM/T 0044.4 §5.4.2.3",
+    "KDF": "GM/T 0044.3 §5.4.3"
+  },
+  "n_hex": "B640000002A3A6F1D603AB4FF58EC74449F2934B18EA8BEEE56EE19CD69ECF25",
+  "v_bits": 256,
+  "hlen_bits": 320,
+  "implementations_agreeing": [
+    "@li0ard/sm3 0.1.1",
+    "OpenSSL 3 SM3 via node:crypto",
+    "GmSSL C sm9_z256_hash1 compiled with OpenSSL SM3 (H1 only)"
+  ],
+  "counts": {
+    "published": 20,
+    "published_verified": 20,
+    "generated": 10
+  },
+  "vectors": [
+    {
+      "id": "A.2-h1-keygen",
+      "fn": "H1",
+      "annex": "A",
+      "description": "H1(IDA||hid=0x01, N) -- signature key extraction",
+      "n_hex": "B640000002A3A6F1D603AB4FF58EC74449F2934B18EA8BEEE56EE19CD69ECF25",
+      "input_hex": "416c69636501",
+      "input_bytes": 6,
+      "sm3_blocks_compressed": 1,
+      "expected_hex": "2acc468c3926b0bdb2767e99ff26e084de9ced8dbc7d5fbf418027b667862fab",
+      "verified": true,
+      "cross_checked": {
+        "openssl-sm3": true,
+        "gmssl-c": true
+      },
+      "source": {
+        "standard": "GM/T 0044.5-2016 Annex A",
+        "file": "fresh-0044-5.txt md5 40cee7ca9ab2b885dee2158b2d4a12cc",
+        "input_lines": "311-311",
+        "expected_lines": "313-314"
+      }
+    },
+    {
+      "id": "A.2-h1-verify",
+      "fn": "H1",
+      "annex": "A",
+      "description": "H1(IDA||hid=0x01, N) -- verification step S2",
+      "n_hex": "B640000002A3A6F1D603AB4FF58EC74449F2934B18EA8BEEE56EE19CD69ECF25",
+      "input_hex": "416c69636501",
+      "input_bytes": 6,
+      "sm3_blocks_compressed": 1,
+      "expected_hex": "2acc468c3926b0bdb2767e99ff26e084de9ced8dbc7d5fbf418027b667862fab",
+      "verified": true,
+      "cross_checked": {
+        "openssl-sm3": true,
+        "gmssl-c": true
+      },
+      "source": {
+        "standard": "GM/T 0044.5-2016 Annex A",
+        "file": "fresh-0044-5.txt md5 40cee7ca9ab2b885dee2158b2d4a12cc",
+        "input_lines": "442-442",
+        "expected_lines": "444-444"
+      }
+    },
+    {
+      "id": "B.2-h1-keygen-A",
+      "fn": "H1",
+      "annex": "B",
+      "description": "H1(IDA||hid=0x03, N) -- Alice encryption key extraction",
+      "n_hex": "B640000002A3A6F1D603AB4FF58EC74449F2934B18EA8BEEE56EE19CD69ECF25",
+      "input_hex": "416c69636503",
+      "input_bytes": 6,
+      "sm3_blocks_compressed": 1,
+      "expected_hex": "32dee8aad2df2db72c087f89aa5fda451b94d31abd03f8e36a057fe2cd160014",
+      "verified": true,
+      "cross_checked": {
+        "openssl-sm3": true,
+        "gmssl-c": true
+      },
+      "source": {
+        "standard": "GM/T 0044.5-2016 Annex B",
+        "file": "fresh-0044-5.txt md5 40cee7ca9ab2b885dee2158b2d4a12cc",
+        "input_lines": "582-582",
+        "expected_lines": "584-585"
+      }
+    },
+    {
+      "id": "B.2-h1-keygen-B",
+      "fn": "H1",
+      "annex": "B",
+      "description": "H1(IDB||hid=0x03, N) -- Bob encryption key extraction",
+      "n_hex": "B640000002A3A6F1D603AB4FF58EC74449F2934B18EA8BEEE56EE19CD69ECF25",
+      "input_hex": "426f6203",
+      "input_bytes": 4,
+      "sm3_blocks_compressed": 1,
+      "expected_hex": "9cb1f6288ce0e51043ce72344582ffc301e0a812a7f5f2004b85547a24b82716",
+      "verified": true,
+      "cross_checked": {
+        "openssl-sm3": true,
+        "gmssl-c": true
+      },
+      "source": {
+        "standard": "GM/T 0044.5-2016 Annex B",
+        "file": "fresh-0044-5.txt md5 40cee7ca9ab2b885dee2158b2d4a12cc",
+        "input_lines": "608-608",
+        "expected_lines": "610-611"
+      }
+    },
+    {
+      "id": "B.2-h1-stepA1-QB",
+      "fn": "H1",
+      "annex": "B",
+      "description": "H1(IDB||hid, N) -- step A1 (QB)",
+      "n_hex": "B640000002A3A6F1D603AB4FF58EC74449F2934B18EA8BEEE56EE19CD69ECF25",
+      "input_hex": "426f6203",
+      "input_bytes": 4,
+      "sm3_blocks_compressed": 1,
+      "expected_hex": "9cb1f6288ce0e51043ce72344582ffc301e0a812a7f5f2004b85547a24b82716",
+      "verified": true,
+      "cross_checked": {
+        "openssl-sm3": true,
+        "gmssl-c": true
+      },
+      "standard_correction": "standard prints input ...02 at line 638; that byte is a typo (see hid-adjudicate.mjs). Verified against ...03.",
+      "source": {
+        "standard": "GM/T 0044.5-2016 Annex B",
+        "file": "fresh-0044-5.txt md5 40cee7ca9ab2b885dee2158b2d4a12cc",
+        "input_lines": "638-638",
+        "expected_lines": "640-641"
+      }
+    },
+    {
+      "id": "B.2-h1-stepB1-QA",
+      "fn": "H1",
+      "annex": "B",
+      "description": "H1(IDA||hid, N) -- step B1 (QA)",
+      "n_hex": "B640000002A3A6F1D603AB4FF58EC74449F2934B18EA8BEEE56EE19CD69ECF25",
+      "input_hex": "416c69636503",
+      "input_bytes": 6,
+      "sm3_blocks_compressed": 1,
+      "expected_hex": "32dee8aad2df2db72c087f89aa5fda451b94d31abd03f8e36a057fe2cd160014",
+      "verified": true,
+      "cross_checked": {
+        "openssl-sm3": true,
+        "gmssl-c": true
+      },
+      "standard_correction": "standard prints input ...02 at line 659; that byte is a typo (see hid-adjudicate.mjs). Verified against ...03.",
+      "source": {
+        "standard": "GM/T 0044.5-2016 Annex B",
+        "file": "fresh-0044-5.txt md5 40cee7ca9ab2b885dee2158b2d4a12cc",
+        "input_lines": "659-659",
+        "expected_lines": "661-662"
+      }
+    },
+    {
+      "id": "C.2-h1-keygen",
+      "fn": "H1",
+      "annex": "C",
+      "description": "H1(IDB||hid=0x03, N) -- KEM key extraction",
+      "n_hex": "B640000002A3A6F1D603AB4FF58EC74449F2934B18EA8BEEE56EE19CD69ECF25",
+      "input_hex": "426f6203",
+      "input_bytes": 4,
+      "sm3_blocks_compressed": 1,
+      "expected_hex": "9cb1f6288ce0e51043ce72344582ffc301e0a812a7f5f2004b85547a24b82716",
+      "verified": true,
+      "cross_checked": {
+        "openssl-sm3": true,
+        "gmssl-c": true
+      },
+      "source": {
+        "standard": "GM/T 0044.5-2016 Annex C",
+        "file": "fresh-0044-5.txt md5 40cee7ca9ab2b885dee2158b2d4a12cc",
+        "input_lines": "1170-1170",
+        "expected_lines": "1172-1173"
+      }
+    },
+    {
+      "id": "C.2-h1-stepA1",
+      "fn": "H1",
+      "annex": "C",
+      "description": "H1(IDB||hid=0x03, N) -- encapsulation step A1",
+      "n_hex": "B640000002A3A6F1D603AB4FF58EC74449F2934B18EA8BEEE56EE19CD69ECF25",
+      "input_hex": "426f6203",
+      "input_bytes": 4,
+      "sm3_blocks_compressed": 1,
+      "expected_hex": "9cb1f6288ce0e51043ce72344582ffc301e0a812a7f5f2004b85547a24b82716",
+      "verified": true,
+      "cross_checked": {
+        "openssl-sm3": true,
+        "gmssl-c": true
+      },
+      "source": {
+        "standard": "GM/T 0044.5-2016 Annex C",
+        "file": "fresh-0044-5.txt md5 40cee7ca9ab2b885dee2158b2d4a12cc",
+        "input_lines": "1196-1196",
+        "expected_lines": "1198-1199"
+      }
+    },
+    {
+      "id": "D.2-h1-keygen",
+      "fn": "H1",
+      "annex": "D",
+      "description": "H1(IDB||hid=0x03, N) -- encryption key extraction",
+      "n_hex": "B640000002A3A6F1D603AB4FF58EC74449F2934B18EA8BEEE56EE19CD69ECF25",
+      "input_hex": "426f6203",
+      "input_bytes": 4,
+      "sm3_blocks_compressed": 1,
+      "expected_hex": "9cb1f6288ce0e51043ce72344582ffc301e0a812a7f5f2004b85547a24b82716",
+      "verified": true,
+      "cross_checked": {
+        "openssl-sm3": true,
+        "gmssl-c": true
+      },
+      "source": {
+        "standard": "GM/T 0044.5-2016 Annex D",
+        "file": "fresh-0044-5.txt md5 40cee7ca9ab2b885dee2158b2d4a12cc",
+        "input_lines": "1387-1387",
+        "expected_lines": "1389-1390"
+      }
+    },
+    {
+      "id": "D.2-h1-stepA1",
+      "fn": "H1",
+      "annex": "D",
+      "description": "H1(IDB||hid=0x03, N) -- encryption step A1",
+      "n_hex": "B640000002A3A6F1D603AB4FF58EC74449F2934B18EA8BEEE56EE19CD69ECF25",
+      "input_hex": "426f6203",
+      "input_bytes": 4,
+      "sm3_blocks_compressed": 1,
+      "expected_hex": "9cb1f6288ce0e51043ce72344582ffc301e0a812a7f5f2004b85547a24b82716",
+      "verified": true,
+      "cross_checked": {
+        "openssl-sm3": true,
+        "gmssl-c": true
+      },
+      "source": {
+        "standard": "GM/T 0044.5-2016 Annex D",
+        "file": "fresh-0044-5.txt md5 40cee7ca9ab2b885dee2158b2d4a12cc",
+        "input_lines": "1425-1425",
+        "expected_lines": "1427-1428"
+      }
+    },
+    {
+      "id": "A.2-h2-sign",
+      "fn": "H2",
+      "annex": "A",
+      "description": "H2(M||w, N) -- signature step A5",
+      "n_hex": "B640000002A3A6F1D603AB4FF58EC74449F2934B18EA8BEEE56EE19CD69ECF25",
+      "input_hex": "4368696e65736520494253207374616e6461726481377b8fdbc2839b4fa2d0e0f8aa6853bbbe9e9c4099608f8612c6078acd7563815aeba217ad502da0f48704cc73cabb3c06209bd87142e14cbd99e8bca1680f30dadc5cd9e207aee32209f6c3ca3ec0d800a1a42d33c73153ded47c70a39d2e8eaf5d179a1836b359a9d1d9bfc19f2efcdb829328620962bd3fdf15f2567f58a543d25609ae943920679194ed30328bb33fd15660bde485c6b79a7b32b013983f012db04ba59fe88db889321cc2373d4c0c35e84f7ab1ff33679bca575d67654f8624eb435b838cca77b2d0347e65d5e46964412a096f4150d8c5ede5440ddf0656fcb663d24731e80292188a2471b8b68aa993899268499d23c89755a1a89744643cead40f0965f28e1cd2895c3d118e4f65c9a0e3e741b6dd52c0ee2d25f5898d60848026b7efb8fcc1b2442ecf0795f8a81cee99a6248f294c82c90d26bd6a814aaf475f128aef43a128e37f80154ae6cb92cad7d1501bae30f750b3a9bd1f96b08e97997363911314705bfb9a9dbb97f75553ec90fbb2ddae53c8f68e42",
+      "input_bytes": 404,
+      "sm3_blocks_compressed": 7,
+      "expected_hex": "823c4b21e4bd2dfe1ed92c606653e996668563152fc33f55d7bfbb9bd9705adb",
+      "verified": true,
+      "cross_checked": {
+        "openssl-sm3": true
+      },
+      "source": {
+        "standard": "GM/T 0044.5-2016 Annex A",
+        "file": "fresh-0044-5.txt md5 40cee7ca9ab2b885dee2158b2d4a12cc",
+        "input_lines": "375-386",
+        "expected_lines": "388-388"
+      }
+    },
+    {
+      "id": "A.2-h2-verify",
+      "fn": "H2",
+      "annex": "A",
+      "description": "H2(M'||w', N) -- verification step S6",
+      "n_hex": "B640000002A3A6F1D603AB4FF58EC74449F2934B18EA8BEEE56EE19CD69ECF25",
+      "input_hex": "4368696e65736520494253207374616e6461726481377b8fdbc2839b4fa2d0e0f8aa6853bbbe9e9c4099608f8612c6078acd7563815aeba217ad502da0f48704cc73cabb3c06209bd87142e14cbd99e8bca1680f30dadc5cd9e207aee32209f6c3ca3ec0d800a1a42d33c73153ded47c70a39d2e8eaf5d179a1836b359a9d1d9bfc19f2efcdb829328620962bd3fdf15f2567f58a543d25609ae943920679194ed30328bb33fd15660bde485c6b79a7b32b013983f012db04ba59fe88db889321cc2373d4c0c35e84f7ab1ff33679bca575d67654f8624eb435b838cca77b2d0347e65d5e46964412a096f4150d8c5ede5440ddf0656fcb663d24731e80292188a2471b8b68aa993899268499d23c89755a1a89744643cead40f0965f28e1cd2895c3d118e4f65c9a0e3e741b6dd52c0ee2d25f5898d60848026b7efb8fcc1b2442ecf0795f8a81cee99a6248f294c82c90d26bd6a814aaf475f128aef43a128e37f80154ae6cb92cad7d1501bae30f750b3a9bd1f96b08e97997363911314705bfb9a9dbb97f75553ec90fbb2ddae53c8f68e42",
+      "input_bytes": 404,
+      "sm3_blocks_compressed": 7,
+      "expected_hex": "823c4b21e4bd2dfe1ed92c606653e996668563152fc33f55d7bfbb9bd9705adb",
+      "verified": true,
+      "cross_checked": {
+        "openssl-sm3": true
+      },
+      "source": {
+        "standard": "GM/T 0044.5-2016 Annex A",
+        "file": "fresh-0044-5.txt md5 40cee7ca9ab2b885dee2158b2d4a12cc",
+        "input_lines": "491-502",
+        "expected_lines": "504-504"
+      }
+    },
+    {
+      "id": "B.2-kdf-SKB",
+      "fn": "KDF",
+      "annex": "B",
+      "description": "KDF(IDA||IDB||RA||RB||g1||g2||g3, 128)",
+      "klen_bits": 128,
+      "input_hex": "416c696365426f62767a4bed09ffbb5229d9caa165548ffa8284a315b15fba864887a9afa5b755fc02a4e50351092133252ba61609779b455df9c4a0109ace241485a955d5b817268168903e4a56dc4117387217c0aa55ab72a5f6a78973e612a58aabe2a5bbc8287e07ce2d3b285a56148d66fc64fe0ed928ba902c1fda056c0083af2cb66528ae28542fb6954c84be6a5f2988a31cb6817ba0781966fa83d9673a9577d3c0c1345e27c19fc02ed9ae37f5bb7be9c03c2b87de027539ccf03e6b7d36de4ab45cd1a1abfcd30c57db0f1a838e3a8f2bf823479c978bd137230506ea6249c891049e3497477913ab89f5e2960f382b1b5c8ee09de0fa498ba95c4409d630d343da404fec93472da33a4db6599095c0cf895e3a7b993ee5e4ebe3b9ab7d7d5ff2a3d1647ba154c3e8e185dfc33657c1f128d480f3f7e3f16801208029e19434c733bb73f21693c66fc23724db26380c526223c705daf6ba18b763a68623c86a632b050f63a071a6d62ea45b59a1942dff5335d1a232c9c5664fad5d6af54c11418b0d8c8e9d8d905780d50e779067f2c4b1c8f83a8b59d735bb52af35f56730bde5ac861ccd9978617267ce4ad9789f77739e62f2e57b48c2ff26d2e90a79a1d86b939b1ca08f64712e33aeda3f44bd6cb633e0f722211e344d73ec9bbebc921427656ba584ce742a2a3ab41c15d3ef94edeb8ef74a2bdcdaaecc09aba567981f64371052d6e9d13e381909dff7b2b41e13c987d0a9068423b769480dacce6a06f4925ffeb92ad870f97dc0893114da22a44dbc9e7a8b6ca31a0cf0467265a1fb48c72c5c3b37e4f2ff83db33d98c0317bcbbbbf4ac6df6b89eca58268b280045e6126ced9e2d7c9cd3d5ad630defab0b831506218037ee0f861cf9b43c78434aec380ae7bf3e1aec0cb67a03440906c7dfb3bcd4b6eeebb7e371f0094ad4a816088d98dbc791d0671caca12236cdf8f39e15aeb96faeb39606d5b04ac581746a663d00dd2b7416baa91172e89d5309d834f78c1e31b4483bb97185931bad7be1b9b57ebac0349f8544469e60c32f6075fb0468a68147ff013537df792ffce024f85710cc2b561a62b62da36aefd60850714f49170fd94a0010c6d4b651b64f3a3a5e58c9687beddcd9e4fedab16b884d1fe6dfa117b2ab821f74e0bf7acda22698592a430968f16086061904ce201847934b11ca0f9e9528f5a9d0ce8f015c9aea79934fdda6d3ab48c8571ce2354b79742aa498cb8cdde6bd1fa5946345a1a652f6a76b6777ad87c9124c7d7065f74808db2e80371c70471580b0c7c457a79ea5e7242fa31ff8e139fae169a16992f5f029162664ce78b333324b3bdb4c682bf9b20626d64dce603f332e9593f62b67a6b002deb6dd2e7d4fad3f33c38f202de2045327490611b2ae6f849cf779b9b74ad9ba6cf397f61326120777ce4692f85dc2adc269d1b62332582d823132a971275477a0cf1dccf4b2bf096d9110f74e2a01b1ed06502333b2ab1ae697ea34f2ef8c6e47b0431831706cb5afcd75754fa79528f65b3651e184bced030661ee4a8d670fbae26796e8cdb66f388ed6644af851885c7f924cc7cb20968aa50e8230a3b39c2bb5dd4d753d94be5dd9a4272cf8270da649cb8a63172f8fb028cd951e76215824a4ee28405d3c5e5dfda6c7ce293f4a40ac8fc5b7168fa54ad3d0b81a0f8f50c164366ccdec1c9a40dce9f0a3113335d89eaeb36f4d31bb6713064cda8835e2aa4529f42129327c6f7e8ab760654d58d17e448f6d5cbca66bd7e33810d270dd3b9436b1bf46b9a17c9d11a5a6b148",
+      "input_bytes": 1288,
+      "sm3_blocks_compressed": 21,
+      "expected_hex": "68b20d3077ea6e2b825315836fdbc633",
+      "verified": true,
+      "cross_checked": {
+        "openssl-sm3": true
+      },
+      "source": {
+        "standard": "GM/T 0044.5-2016 Annex B",
+        "file": "fresh-0044-5.txt md5 40cee7ca9ab2b885dee2158b2d4a12cc",
+        "input_lines": "726-766",
+        "expected_lines": "768-768"
+      }
+    },
+    {
+      "id": "B.2-kdf-SKA",
+      "fn": "KDF",
+      "annex": "B",
+      "description": "KDF(IDA||IDB||RA||RB||g1'||g2'||g3', 128)",
+      "klen_bits": 128,
+      "input_hex": "416c696365426f62767a4bed09ffbb5229d9caa165548ffa8284a315b15fba864887a9afa5b755fc02a4e50351092133252ba61609779b455df9c4a0109ace241485a955d5b817268168903e4a56dc4117387217c0aa55ab72a5f6a78973e612a58aabe2a5bbc8287e07ce2d3b285a56148d66fc64fe0ed928ba902c1fda056c0083af2cb66528ae28542fb6954c84be6a5f2988a31cb6817ba0781966fa83d9673a9577d3c0c1345e27c19fc02ed9ae37f5bb7be9c03c2b87de027539ccf03e6b7d36de4ab45cd1a1abfcd30c57db0f1a838e3a8f2bf823479c978bd137230506ea6249c891049e3497477913ab89f5e2960f382b1b5c8ee09de0fa498ba95c4409d630d343da404fec93472da33a4db6599095c0cf895e3a7b993ee5e4ebe3b9ab7d7d5ff2a3d1647ba154c3e8e185dfc33657c1f128d480f3f7e3f16801208029e19434c733bb73f21693c66fc23724db26380c526223c705daf6ba18b763a68623c86a632b050f63a071a6d62ea45b59a1942dff5335d1a232c9c5664fad5d6af54c11418b0d8c8e9d8d905780d50e779067f2c4b1c8f83a8b59d735bb52af35f56730bde5ac861ccd9978617267ce4ad9789f77739e62f2e57b48c2ff26d2e90a79a1d86b939b1ca08f64712e33aeda3f44bd6cb633e0f722211e344d73ec9bbebc921427656ba584ce742a2a3ab41c15d3ef94edeb8ef74a2bdcdaaecc09aba567981f64371052d6e9d13e381909dff7b2b41e13c987d0a9068423b769480dacce6a06f4925ffeb92ad870f97dc0893114da22a44dbc9e7a8b6ca31a0cf0467265a1fb48c72c5c3b37e4f2ff83db33d98c0317bcbbbbf4ac6df6b89eca58268b280045e6126ced9e2d7c9cd3d5ad630defab0b831506218037ee0f861cf9b43c78434aec380ae7bf3e1aec0cb67a03440906c7dfb3bcd4b6eeebb7e371f0094ad4a816088d98dbc791d0671caca12236cdf8f39e15aeb96faeb39606d5b04ac581746a663d00dd2b7416baa91172e89d5309d834f78c1e31b4483bb97185931bad7be1b9b57ebac0349f8544469e60c32f6075fb0468a68147ff013537df792ffce024f85710cc2b561a62b62da36aefd60850714f49170fd94a0010c6d4b651b64f3a3a5e58c9687beddcd9e4fedab16b884d1fe6dfa117b2ab821f74e0bf7acda22698592a430968f16086061904ce201847934b11ca0f9e9528f5a9d0ce8f015c9aea79934fdda6d3ab48c8571ce2354b79742aa498cb8cdde6bd1fa5946345a1a652f6a76b6777ad87c9124c7d7065f74808db2e80371c70471580b0c7c457a79ea5e7242fa31ff8e139fae169a16992f5f029162664ce78b333324b3bdb4c682bf9b20626d64dce603f332e9593f62b67a6b002deb6dd2e7d4fad3f33c38f202de2045327490611b2ae6f849cf779b9b74ad9ba6cf397f61326120777ce4692f85dc2adc269d1b62332582d823132a971275477a0cf1dccf4b2bf096d9110f74e2a01b1ed06502333b2ab1ae697ea34f2ef8c6e47b0431831706cb5afcd75754fa79528f65b3651e184bced030661ee4a8d670fbae26796e8cdb66f388ed6644af851885c7f924cc7cb20968aa50e8230a3b39c2bb5dd4d753d94be5dd9a4272cf8270da649cb8a63172f8fb028cd951e76215824a4ee28405d3c5e5dfda6c7ce293f4a40ac8fc5b7168fa54ad3d0b81a0f8f50c164366ccdec1c9a40dce9f0a3113335d89eaeb36f4d31bb6713064cda8835e2aa4529f42129327c6f7e8ab760654d58d17e448f6d5cbca66bd7e33810d270dd3b9436b1bf46b9a17c9d11a5a6b148",
+      "input_bytes": 1288,
+      "sm3_blocks_compressed": 21,
+      "expected_hex": "68b20d3077ea6e2b825315836fdbc633",
+      "verified": true,
+      "cross_checked": {
+        "openssl-sm3": true
+      },
+      "source": {
+        "standard": "GM/T 0044.5-2016 Annex B",
+        "file": "fresh-0044-5.txt md5 40cee7ca9ab2b885dee2158b2d4a12cc",
+        "input_lines": "934-974",
+        "expected_lines": "976-976"
+      }
+    },
+    {
+      "id": "C.2-kdf-encap",
+      "fn": "KDF",
+      "annex": "C",
+      "description": "KDF(C||w||IDB, 256) -- encapsulation",
+      "klen_bits": 256,
+      "input_hex": "1edee2c3f465914491de44cefb2cb434ab02c308d9dc5e2067b4fed5aaac8a0f1c9b4c435eca35ab83bb734174c0f78fde81a53374aff3b3602bbc5e37be9a4c8eab0cd6d0c95a6bbb7051ac848fdfb9689e5e5c486b1294557189b338b53b1d78082bb40152dc35ac774442cc6408ffd68494d9953d77bf55e30e84697f66745aaf52239e46b0373b3168bab75c32e048b5faebabfa1f7f9ba6b4c0c90e65b075f6a2d9ed54c87cddd2eaa787032320205e7ac7d7feaa8695ab2bf7f5710861247c2034ccf4a1432da1876d023ad6d74ff1678fda3af37a3d9f613cde8057988b07151bac93af48d78d86c26ea97f24e2dacc84104cce8791fe90ba61b2049caac6ab38ea07f9966173fd9bbf34aab58ee84cd3777a9fd00bbca1dc09cf8696a1040465bd723ae513c4be3ef2cfdc088a935f0b207deed7aad5ce2fc37d42034d874a4ce9b3b58765b1252a0880952b4ff3c97ea1a4cfdc67a0a0072541a03d3924eabc443b0503510b93bbcd98eb70e0192b821d14d69ccb2513a1a7421eb7a018a035e8fb61f271de1c5b3e781c63508c113b3eac537805eae164d732fad056bea27c8624d5064c9c278a193d63f6908ee558df5f5e0721317fc6e829c242426f62",
+      "input_bytes": 451,
+      "sm3_blocks_compressed": 8,
+      "expected_hex": "4ff5cf86d2ad40c8f4bac98d76abdbde0c0e2f0a829d3f911ef5b2bce0695480",
+      "verified": true,
+      "cross_checked": {
+        "openssl-sm3": true
+      },
+      "source": {
+        "standard": "GM/T 0044.5-2016 Annex C",
+        "file": "fresh-0044-5.txt md5 40cee7ca9ab2b885dee2158b2d4a12cc",
+        "input_lines": "1250-1262",
+        "expected_lines": "1264-1264"
+      }
+    },
+    {
+      "id": "C.2-kdf-decap",
+      "fn": "KDF",
+      "annex": "C",
+      "description": "KDF(C'||w'||IDB, 256) -- decapsulation",
+      "klen_bits": 256,
+      "input_hex": "1edee2c3f465914491de44cefb2cb434ab02c308d9dc5e2067b4fed5aaac8a0f1c9b4c435eca35ab83bb734174c0f78fde81a53374aff3b3602bbc5e37be9a4c8eab0cd6d0c95a6bbb7051ac848fdfb9689e5e5c486b1294557189b338b53b1d78082bb40152dc35ac774442cc6408ffd68494d9953d77bf55e30e84697f66745aaf52239e46b0373b3168bab75c32e048b5faebabfa1f7f9ba6b4c0c90e65b075f6a2d9ed54c87cddd2eaa787032320205e7ac7d7feaa8695ab2bf7f5710861247c2034ccf4a1432da1876d023ad6d74ff1678fda3af37a3d9f613cde8057988b07151bac93af48d78d86c26ea97f24e2dacc84104cce8791fe90ba61b2049caac6ab38ea07f9966173fd9bbf34aab58ee84cd3777a9fd00bbca1dc09cf8696a1040465bd723ae513c4be3ef2cfdc088a935f0b207deed7aad5ce2fc37d42034d874a4ce9b3b58765b1252a0880952b4ff3c97ea1a4cfdc67a0a0072541a03d3924eabc443b0503510b93bbcd98eb70e0192b821d14d69ccb2513a1a7421eb7a018a035e8fb61f271de1c5b3e781c63508c113b3eac537805eae164d732fad056bea27c8624d5064c9c278a193d63f6908ee558df5f5e0721317fc6e829c242426f62",
+      "input_bytes": 451,
+      "sm3_blocks_compressed": 8,
+      "expected_hex": "4ff5cf86d2ad40c8f4bac98d76abdbde0c0e2f0a829d3f911ef5b2bce0695480",
+      "verified": true,
+      "cross_checked": {
+        "openssl-sm3": true
+      },
+      "source": {
+        "standard": "GM/T 0044.5-2016 Annex C",
+        "file": "fresh-0044-5.txt md5 40cee7ca9ab2b885dee2158b2d4a12cc",
+        "input_lines": "1290-1302",
+        "expected_lines": "1304-1304"
+      }
+    },
+    {
+      "id": "D.2a-kdf-enc",
+      "fn": "KDF",
+      "annex": "D",
+      "description": "KDF(C1||w||IDB, 416) -- stream-cipher encrypt",
+      "klen_bits": 416,
+      "input_hex": "2445471164490618e1ee20528ff1d545b0f14c8bcaa44544f03dab5dac07d8ff42ffca97d57cddc05ea405f2e586feb3a6930715532b8000759f13059ed59ac063253798b7535975a90f202561fc54570fee88bf69e3b7a512697069e59e1f5d42d54b984af01d710ba0030c18738f6b14e4df472acaf89399228d85af117904b426dff040c49f9a43bcd7fd7d757b7d1d8d7311c08fc3b57616c5ee137785a328d19396dbdfac50eee62b1c7f994bb6f9bd9efb2221a1be1b6eb3e8f71485b4a3eef46e1b99f614d7bd7f57574ba7ebb502af0bdaba0787c5c4dbc56a344a25a06790b605cea0bbaf34776d6b1fc0198a02d05bbaac6f64a555ab2ca576f0dab405cbbf22197b94fd18d27da0b0e52c8754ee94279634691fea6e13ffd0584eaa2a94a7e2259b671896302b4275ae3e8cf2010098d5beaf19d0a6e60354e1c55c97e64f848b06d39ba8828ff59502c081d3dae68f35f7e6448db96d220a0fba02be03c51bf062b6f564ae0bfb42dca36e71d387512e3bccca3379b73ec4717652be92fb9e78ba9e1d80a156065804935742dbd2b967543011aac53333909fbf5fadec14a2fbd15248e77467442a69698246fb0314c7a8246d952219dd2144ed426f62",
+      "input_bytes": 451,
+      "sm3_blocks_compressed": 8,
+      "expected_hex": "58373260f067ec48667c21c144f8bc33cd3049788651ffd5f738003e51df31174d0e4e402fd87f4581b612f74259db574f67ece6",
+      "verified": true,
+      "cross_checked": {
+        "openssl-sm3": true
+      },
+      "source": {
+        "standard": "GM/T 0044.5-2016 Annex D",
+        "file": "fresh-0044-5.txt md5 40cee7ca9ab2b885dee2158b2d4a12cc",
+        "input_lines": "1485-1497",
+        "expected_lines": "1499-1500"
+      }
+    },
+    {
+      "id": "D.2b-kdf-enc",
+      "fn": "KDF",
+      "annex": "D",
+      "description": "KDF(C1||w||IDB, 384) -- block-cipher encrypt",
+      "klen_bits": 384,
+      "input_hex": "2445471164490618e1ee20528ff1d545b0f14c8bcaa44544f03dab5dac07d8ff42ffca97d57cddc05ea405f2e586feb3a6930715532b8000759f13059ed59ac063253798b7535975a90f202561fc54570fee88bf69e3b7a512697069e59e1f5d42d54b984af01d710ba0030c18738f6b14e4df472acaf89399228d85af117904b426dff040c49f9a43bcd7fd7d757b7d1d8d7311c08fc3b57616c5ee137785a328d19396dbdfac50eee62b1c7f994bb6f9bd9efb2221a1be1b6eb3e8f71485b4a3eef46e1b99f614d7bd7f57574ba7ebb502af0bdaba0787c5c4dbc56a344a25a06790b605cea0bbaf34776d6b1fc0198a02d05bbaac6f64a555ab2ca576f0dab405cbbf22197b94fd18d27da0b0e52c8754ee94279634691fea6e13ffd0584eaa2a94a7e2259b671896302b4275ae3e8cf2010098d5beaf19d0a6e60354e1c55c97e64f848b06d39ba8828ff59502c081d3dae68f35f7e6448db96d220a0fba02be03c51bf062b6f564ae0bfb42dca36e71d387512e3bccca3379b73ec4717652be92fb9e78ba9e1d80a156065804935742dbd2b967543011aac53333909fbf5fadec14a2fbd15248e77467442a69698246fb0314c7a8246d952219dd2144ed426f62",
+      "input_bytes": 451,
+      "sm3_blocks_compressed": 8,
+      "expected_hex": "58373260f067ec48667c21c144f8bc33cd3049788651ffd5f738003e51df31174d0e4e402fd87f4581b612f74259db57",
+      "verified": true,
+      "cross_checked": {
+        "openssl-sm3": true
+      },
+      "source": {
+        "standard": "GM/T 0044.5-2016 Annex D",
+        "file": "fresh-0044-5.txt md5 40cee7ca9ab2b885dee2158b2d4a12cc",
+        "input_lines": "1529-1546",
+        "expected_lines": "1548-1549"
+      }
+    },
+    {
+      "id": "D.2a-kdf-dec",
+      "fn": "KDF",
+      "annex": "D",
+      "description": "KDF(C1'||w'||IDB, 416) -- stream-cipher decrypt",
+      "klen_bits": 416,
+      "input_hex": "2445471164490618e1ee20528ff1d545b0f14c8bcaa44544f03dab5dac07d8ff42ffca97d57cddc05ea405f2e586feb3a6930715532b8000759f13059ed59ac063253798b7535975a90f202561fc54570fee88bf69e3b7a512697069e59e1f5d42d54b984af01d710ba0030c18738f6b14e4df472acaf89399228d85af117904b426dff040c49f9a43bcd7fd7d757b7d1d8d7311c08fc3b57616c5ee137785a328d19396dbdfac50eee62b1c7f994bb6f9bd9efb2221a1be1b6eb3e8f71485b4a3eef46e1b99f614d7bd7f57574ba7ebb502af0bdaba0787c5c4dbc56a344a25a06790b605cea0bbaf34776d6b1fc0198a02d05bbaac6f64a555ab2ca576f0dab405cbbf22197b94fd18d27da0b0e52c8754ee94279634691fea6e13ffd0584eaa2a94a7e2259b671896302b4275ae3e8cf2010098d5beaf19d0a6e60354e1c55c97e64f848b06d39ba8828ff59502c081d3dae68f35f7e6448db96d220a0fba02be03c51bf062b6f564ae0bfb42dca36e71d387512e3bccca3379b73ec4717652be92fb9e78ba9e1d80a156065804935742dbd2b967543011aac53333909fbf5fadec14a2fbd15248e77467442a69698246fb0314c7a8246d952219dd2144ed426f62",
+      "input_bytes": 451,
+      "sm3_blocks_compressed": 8,
+      "expected_hex": "58373260f067ec48667c21c144f8bc33cd3049788651ffd5f738003e51df31174d0e4e402fd87f4581b612f74259db574f67ece6",
+      "verified": true,
+      "cross_checked": {
+        "openssl-sm3": true
+      },
+      "source": {
+        "standard": "GM/T 0044.5-2016 Annex D",
+        "file": "fresh-0044-5.txt md5 40cee7ca9ab2b885dee2158b2d4a12cc",
+        "input_lines": "1603-1615",
+        "expected_lines": "1617-1618"
+      }
+    },
+    {
+      "id": "D.2b-kdf-dec",
+      "fn": "KDF",
+      "annex": "D",
+      "description": "KDF(C1'||w'||IDB, 384) -- block-cipher decrypt",
+      "klen_bits": 384,
+      "input_hex": "2445471164490618e1ee20528ff1d545b0f14c8bcaa44544f03dab5dac07d8ff42ffca97d57cddc05ea405f2e586feb3a6930715532b8000759f13059ed59ac063253798b7535975a90f202561fc54570fee88bf69e3b7a512697069e59e1f5d42d54b984af01d710ba0030c18738f6b14e4df472acaf89399228d85af117904b426dff040c49f9a43bcd7fd7d757b7d1d8d7311c08fc3b57616c5ee137785a328d19396dbdfac50eee62b1c7f994bb6f9bd9efb2221a1be1b6eb3e8f71485b4a3eef46e1b99f614d7bd7f57574ba7ebb502af0bdaba0787c5c4dbc56a344a25a06790b605cea0bbaf34776d6b1fc0198a02d05bbaac6f64a555ab2ca576f0dab405cbbf22197b94fd18d27da0b0e52c8754ee94279634691fea6e13ffd0584eaa2a94a7e2259b671896302b4275ae3e8cf2010098d5beaf19d0a6e60354e1c55c97e64f848b06d39ba8828ff59502c081d3dae68f35f7e6448db96d220a0fba02be03c51bf062b6f564ae0bfb42dca36e71d387512e3bccca3379b73ec4717652be92fb9e78ba9e1d80a156065804935742dbd2b967543011aac53333909fbf5fadec14a2fbd15248e77467442a69698246fb0314c7a8246d952219dd2144ed426f62",
+      "input_bytes": 451,
+      "sm3_blocks_compressed": 8,
+      "expected_hex": "58373260f067ec48667c21c144f8bc33cd3049788651ffd5f738003e51df31174d0e4e402fd87f4581b612f74259db57",
+      "verified": true,
+      "cross_checked": {
+        "openssl-sm3": true
+      },
+      "source": {
+        "standard": "GM/T 0044.5-2016 Annex D",
+        "file": "fresh-0044-5.txt md5 40cee7ca9ab2b885dee2158b2d4a12cc",
+        "input_lines": "1642-1659",
+        "expected_lines": "1661-1662"
+      }
+    },
+    {
+      "id": "gen-h1-49B-hid03",
+      "fn": "H1",
+      "annex": "GENERATED",
+      "description": "H1(identity||hid=0x03, N); identity is 49 bytes, so each SM3 call compresses 1 block(s)",
+      "n_hex": "B640000002A3A6F1D603AB4FF58EC74449F2934B18EA8BEEE56EE19CD69ECF25",
+      "identity_utf8": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa@examp",
+      "identity_hex": "61616161616161616161616161616161616161616161616161616161616161616161616161616161616161406578616d70",
+      "input_hex": "61616161616161616161616161616161616161616161616161616161616161616161616161616161616161406578616d7003",
+      "input_bytes": 50,
+      "sm3_message_bytes": 55,
+      "sm3_blocks_compressed": 1,
+      "expected_hex": "4f14d33a36734daf8063ddba62923378e6878c01510b9cacbfddfa152913a780",
+      "source": {
+        "origin": "generated by this gate; not published in GM/T 0044.5",
+        "cross_checked_against": [
+          "OpenSSL 3 SM3 + independent H1",
+          "GmSSL C sm9_z256_hash1 (compiled) + OpenSSL 3 SM3"
+        ]
+      },
+      "verified": true
+    },
+    {
+      "id": "gen-h1-50B-hid03",
+      "fn": "H1",
+      "annex": "GENERATED",
+      "description": "H1(identity||hid=0x03, N); identity is 50 bytes, so each SM3 call compresses 2 block(s)",
+      "n_hex": "B640000002A3A6F1D603AB4FF58EC74449F2934B18EA8BEEE56EE19CD69ECF25",
+      "identity_utf8": "sm9-multiblock-identity-for-gate2b-crypto-lab-sm9-",
+      "identity_hex": "736d392d6d756c7469626c6f636b2d6964656e746974792d666f722d6761746532622d63727970746f2d6c61622d736d392d",
+      "input_hex": "736d392d6d756c7469626c6f636b2d6964656e746974792d666f722d6761746532622d63727970746f2d6c61622d736d392d03",
+      "input_bytes": 51,
+      "sm3_message_bytes": 56,
+      "sm3_blocks_compressed": 2,
+      "expected_hex": "924c5abe31380c4acc83843551495e426e4936a1c14465febac268b6ce68f14d",
+      "source": {
+        "origin": "generated by this gate; not published in GM/T 0044.5",
+        "cross_checked_against": [
+          "OpenSSL 3 SM3 + independent H1",
+          "GmSSL C sm9_z256_hash1 (compiled) + OpenSSL 3 SM3"
+        ]
+      },
+      "verified": true
+    },
+    {
+      "id": "gen-h1-60B-hid01",
+      "fn": "H1",
+      "annex": "GENERATED",
+      "description": "H1(identity||hid=0x01, N); identity is 60 bytes, so each SM3 call compresses 2 block(s)",
+      "n_hex": "B640000002A3A6F1D603AB4FF58EC74449F2934B18EA8BEEE56EE19CD69ECF25",
+      "identity_utf8": "sm9-multiblock-identity-for-gate2b-crypto-lab-sm9-forge-0123",
+      "identity_hex": "736d392d6d756c7469626c6f636b2d6964656e746974792d666f722d6761746532622d63727970746f2d6c61622d736d392d666f7267652d30313233",
+      "input_hex": "736d392d6d756c7469626c6f636b2d6964656e746974792d666f722d6761746532622d63727970746f2d6c61622d736d392d666f7267652d3031323301",
+      "input_bytes": 61,
+      "sm3_message_bytes": 66,
+      "sm3_blocks_compressed": 2,
+      "expected_hex": "264aa18e327cacb49c9c19c500399c47c09670bfe1a621cf0d1a2d43c50ea034",
+      "source": {
+        "origin": "generated by this gate; not published in GM/T 0044.5",
+        "cross_checked_against": [
+          "OpenSSL 3 SM3 + independent H1",
+          "GmSSL C sm9_z256_hash1 (compiled) + OpenSSL 3 SM3"
+        ]
+      },
+      "verified": true
+    },
+    {
+      "id": "gen-h1-60B-hid02",
+      "fn": "H1",
+      "annex": "GENERATED",
+      "description": "H1(identity||hid=0x02, N); identity is 60 bytes, so each SM3 call compresses 2 block(s)",
+      "n_hex": "B640000002A3A6F1D603AB4FF58EC74449F2934B18EA8BEEE56EE19CD69ECF25",
+      "identity_utf8": "sm9-multiblock-identity-for-gate2b-crypto-lab-sm9-forge-0123",
+      "identity_hex": "736d392d6d756c7469626c6f636b2d6964656e746974792d666f722d6761746532622d63727970746f2d6c61622d736d392d666f7267652d30313233",
+      "input_hex": "736d392d6d756c7469626c6f636b2d6964656e746974792d666f722d6761746532622d63727970746f2d6c61622d736d392d666f7267652d3031323302",
+      "input_bytes": 61,
+      "sm3_message_bytes": 66,
+      "sm3_blocks_compressed": 2,
+      "expected_hex": "770637c42f965206b4496c013194a9d4b2e5db42047737890df3b377d25a26b8",
+      "source": {
+        "origin": "generated by this gate; not published in GM/T 0044.5",
+        "cross_checked_against": [
+          "OpenSSL 3 SM3 + independent H1",
+          "GmSSL C sm9_z256_hash1 (compiled) + OpenSSL 3 SM3"
+        ]
+      },
+      "verified": true
+    },
+    {
+      "id": "gen-h1-60B-hid03",
+      "fn": "H1",
+      "annex": "GENERATED",
+      "description": "H1(identity||hid=0x03, N); identity is 60 bytes, so each SM3 call compresses 2 block(s)",
+      "n_hex": "B640000002A3A6F1D603AB4FF58EC74449F2934B18EA8BEEE56EE19CD69ECF25",
+      "identity_utf8": "sm9-multiblock-identity-for-gate2b-crypto-lab-sm9-forge-0123",
+      "identity_hex": "736d392d6d756c7469626c6f636b2d6964656e746974792d666f722d6761746532622d63727970746f2d6c61622d736d392d666f7267652d30313233",
+      "input_hex": "736d392d6d756c7469626c6f636b2d6964656e746974792d666f722d6761746532622d63727970746f2d6c61622d736d392d666f7267652d3031323303",
+      "input_bytes": 61,
+      "sm3_message_bytes": 66,
+      "sm3_blocks_compressed": 2,
+      "expected_hex": "1e2f5bf7928451deae54c6fb79eb4a693deb62fe908c08174edf5b837f071f03",
+      "source": {
+        "origin": "generated by this gate; not published in GM/T 0044.5",
+        "cross_checked_against": [
+          "OpenSSL 3 SM3 + independent H1",
+          "GmSSL C sm9_z256_hash1 (compiled) + OpenSSL 3 SM3"
+        ]
+      },
+      "verified": true
+    },
+    {
+      "id": "gen-h1-62B-hid01",
+      "fn": "H1",
+      "annex": "GENERATED",
+      "description": "H1(identity||hid=0x01, N); identity is 62 bytes, so each SM3 call compresses 2 block(s)",
+      "n_hex": "B640000002A3A6F1D603AB4FF58EC74449F2934B18EA8BEEE56EE19CD69ECF25",
+      "identity_utf8": "certificate-authority.operations-team@crypto-lab.example.cn.cn",
+      "identity_hex": "63657274696669636174652d617574686f726974792e6f7065726174696f6e732d7465616d4063727970746f2d6c61622e6578616d706c652e636e2e636e",
+      "input_hex": "63657274696669636174652d617574686f726974792e6f7065726174696f6e732d7465616d4063727970746f2d6c61622e6578616d706c652e636e2e636e01",
+      "input_bytes": 63,
+      "sm3_message_bytes": 68,
+      "sm3_blocks_compressed": 2,
+      "expected_hex": "1a2471e1ef5781816fc467948dce4e9d29a3241f512a3638582791f6658e640a",
+      "source": {
+        "origin": "generated by this gate; not published in GM/T 0044.5",
+        "cross_checked_against": [
+          "OpenSSL 3 SM3 + independent H1",
+          "GmSSL C sm9_z256_hash1 (compiled) + OpenSSL 3 SM3"
+        ]
+      },
+      "verified": true
+    },
+    {
+      "id": "gen-h1-62B-hid02",
+      "fn": "H1",
+      "annex": "GENERATED",
+      "description": "H1(identity||hid=0x02, N); identity is 62 bytes, so each SM3 call compresses 2 block(s)",
+      "n_hex": "B640000002A3A6F1D603AB4FF58EC74449F2934B18EA8BEEE56EE19CD69ECF25",
+      "identity_utf8": "certificate-authority.operations-team@crypto-lab.example.cn.cn",
+      "identity_hex": "63657274696669636174652d617574686f726974792e6f7065726174696f6e732d7465616d4063727970746f2d6c61622e6578616d706c652e636e2e636e",
+      "input_hex": "63657274696669636174652d617574686f726974792e6f7065726174696f6e732d7465616d4063727970746f2d6c61622e6578616d706c652e636e2e636e02",
+      "input_bytes": 63,
+      "sm3_message_bytes": 68,
+      "sm3_blocks_compressed": 2,
+      "expected_hex": "79edf9d3d689e540131df98c23446d355748b5265ae4eb3c60e5395b3fd51b98",
+      "source": {
+        "origin": "generated by this gate; not published in GM/T 0044.5",
+        "cross_checked_against": [
+          "OpenSSL 3 SM3 + independent H1",
+          "GmSSL C sm9_z256_hash1 (compiled) + OpenSSL 3 SM3"
+        ]
+      },
+      "verified": true
+    },
+    {
+      "id": "gen-h1-62B-hid03",
+      "fn": "H1",
+      "annex": "GENERATED",
+      "description": "H1(identity||hid=0x03, N); identity is 62 bytes, so each SM3 call compresses 2 block(s)",
+      "n_hex": "B640000002A3A6F1D603AB4FF58EC74449F2934B18EA8BEEE56EE19CD69ECF25",
+      "identity_utf8": "certificate-authority.operations-team@crypto-lab.example.cn.cn",
+      "identity_hex": "63657274696669636174652d617574686f726974792e6f7065726174696f6e732d7465616d4063727970746f2d6c61622e6578616d706c652e636e2e636e",
+      "input_hex": "63657274696669636174652d617574686f726974792e6f7065726174696f6e732d7465616d4063727970746f2d6c61622e6578616d706c652e636e2e636e03",
+      "input_bytes": 63,
+      "sm3_message_bytes": 68,
+      "sm3_blocks_compressed": 2,
+      "expected_hex": "58146b24b930f6d1e58e093fdf7105d8de10b69abc2506571757f13fd6af743b",
+      "source": {
+        "origin": "generated by this gate; not published in GM/T 0044.5",
+        "cross_checked_against": [
+          "OpenSSL 3 SM3 + independent H1",
+          "GmSSL C sm9_z256_hash1 (compiled) + OpenSSL 3 SM3"
+        ]
+      },
+      "verified": true
+    },
+    {
+      "id": "gen-h1-119B-hid03",
+      "fn": "H1",
+      "annex": "GENERATED",
+      "description": "H1(identity||hid=0x03, N); identity is 119 bytes, so each SM3 call compresses 3 block(s)",
+      "n_hex": "B640000002A3A6F1D603AB4FF58EC74449F2934B18EA8BEEE56EE19CD69ECF25",
+      "identity_utf8": "sm9-multiblock-identity-for-gate2b-crypto-lab-sm9-forge-0123456789-abcdefghijklmnopqrstuvwxyz-sm9-multiblock-identity-f",
+      "identity_hex": "736d392d6d756c7469626c6f636b2d6964656e746974792d666f722d6761746532622d63727970746f2d6c61622d736d392d666f7267652d303132333435363738392d6162636465666768696a6b6c6d6e6f707172737475767778797a2d736d392d6d756c7469626c6f636b2d6964656e746974792d66",
+      "input_hex": "736d392d6d756c7469626c6f636b2d6964656e746974792d666f722d6761746532622d63727970746f2d6c61622d736d392d666f7267652d303132333435363738392d6162636465666768696a6b6c6d6e6f707172737475767778797a2d736d392d6d756c7469626c6f636b2d6964656e746974792d6603",
+      "input_bytes": 120,
+      "sm3_message_bytes": 125,
+      "sm3_blocks_compressed": 3,
+      "expected_hex": "afcf378107aa244912681796ecedb4b80e7190394e02451828bb8412f3103f8a",
+      "source": {
+        "origin": "generated by this gate; not published in GM/T 0044.5",
+        "cross_checked_against": [
+          "OpenSSL 3 SM3 + independent H1",
+          "GmSSL C sm9_z256_hash1 (compiled) + OpenSSL 3 SM3"
+        ]
+      },
+      "verified": true
+    },
+    {
+      "id": "gen-h1-200B-hid03",
+      "fn": "H1",
+      "annex": "GENERATED",
+      "description": "H1(identity||hid=0x03, N); identity is 200 bytes, so each SM3 call compresses 4 block(s)",
+      "n_hex": "B640000002A3A6F1D603AB4FF58EC74449F2934B18EA8BEEE56EE19CD69ECF25",
+      "identity_utf8": "sm9-multiblock-identity-for-gate2b-crypto-lab-sm9-forge-0123456789-abcdefghijklmnopqrstuvwxyz-sm9-multiblock-identity-for-gate2b-crypto-lab-sm9-forge-0123456789-abcdefghijklmnopqrstuvwxyz-sm9-multiblo",
+      "identity_hex": "736d392d6d756c7469626c6f636b2d6964656e746974792d666f722d6761746532622d63727970746f2d6c61622d736d392d666f7267652d303132333435363738392d6162636465666768696a6b6c6d6e6f707172737475767778797a2d736d392d6d756c7469626c6f636b2d6964656e746974792d666f722d6761746532622d63727970746f2d6c61622d736d392d666f7267652d303132333435363738392d6162636465666768696a6b6c6d6e6f707172737475767778797a2d736d392d6d756c7469626c6f",
+      "input_hex": "736d392d6d756c7469626c6f636b2d6964656e746974792d666f722d6761746532622d63727970746f2d6c61622d736d392d666f7267652d303132333435363738392d6162636465666768696a6b6c6d6e6f707172737475767778797a2d736d392d6d756c7469626c6f636b2d6964656e746974792d666f722d6761746532622d63727970746f2d6c61622d736d392d666f7267652d303132333435363738392d6162636465666768696a6b6c6d6e6f707172737475767778797a2d736d392d6d756c7469626c6f03",
+      "input_bytes": 201,
+      "sm3_message_bytes": 206,
+      "sm3_blocks_compressed": 4,
+      "expected_hex": "3d94842d7733efc8077296f239a44bcd9a8c178fc6328749305ae4fb670e3e70",
+      "source": {
+        "origin": "generated by this gate; not published in GM/T 0044.5",
+        "cross_checked_against": [
+          "OpenSSL 3 SM3 + independent H1",
+          "GmSSL C sm9_z256_hash1 (compiled) + OpenSSL 3 SM3"
+        ]
+      },
+      "verified": true
+    }
+  ]
+}

@@ -1,0 +1,258 @@
+{
+  "id": "gmt-0044.5-annex-A-signature",
+  "title": "GM/T 0044.5-2016 Annex A - SM9 digital signature, worked example",
+  "generated": "2026-09-29T12:24:06.981Z",
+  "source": {
+    "pdf": "GM/T 0044.5-2016, fetched from gmbz.org.cn",
+    "pdf_md5": "40cee7ca9ab2b885dee2158b2d4a12cc",
+    "text_md5": "771f705c5a5d82d22ba7fd1a92f4ef32",
+    "text_derivation": "pdftotext -layout fresh-0044-5.pdf",
+    "annex_lines": "237-511",
+    "note": "every value below is parsed from those lines by line number, not retyped"
+  },
+  "conventions": {
+    "fp2": "the annex prints an Fp2 element as (c1, c0); GmSSL-JS stores [c0, c1]",
+    "fp12": "the annex prints 12 components in the reverse of GmSSL-JS’s flattened fp12 order",
+    "fp12_octets": "H2 hashes w in the annex’s printed order, i.e. reversed relative to GmSSL-JS",
+    "scalars": "the annex strips leading zeros (ks and r print as 62 nibbles); compare as integers or left-pad to 64"
+  },
+  "curve": {
+    "q": "b640000002a3a6f1d603ab4ff58ec74521f2934b1a7aeedbe56f9b27e351457d",
+    "b": "05",
+    "N": "b640000002a3a6f1d603ab4ff58ec74449f2934b18ea8beee56ee19cd69ecf25",
+    "cofactor": "1",
+    "embedding_degree": 12,
+    "twist_beta": "-2",
+    "P1": {
+      "x": "93de051d62bf718ff5ed0704487d01d6e1e4086909dc3280e8c4e4817c66dddd",
+      "y": "21fe8dda4f21e607631065125c395bbc1c1c00cbfa6024350c464cd70a3ea616"
+    },
+    "P2": {
+      "x": [
+        "85aef3d078640c98597b6027b441a01ff1dd2c190f5e93c454806c11d8806141",
+        "3722755292130b08d2aab97fd34ec120ee265948d19c17abf9b7213baf82d65b"
+      ],
+      "y": [
+        "17509b092e845c1266ba0d262cbee6ed0736a96fa347c8bd856dc76b84ebeb96",
+        "a7cf28d519be3da65f3170153d278ff247efba98a71a08116215bba5c999a7c7"
+      ],
+      "order": "as printed (c1, c0)"
+    }
+  },
+  "signature": {
+    "hid": "01",
+    "ks": "000130e78459d78545cb54c587e02cf480ce0b66340f319f348a1d5b1f2dc5f4",
+    "Ppubs": {
+      "x": [
+        "9f64080b3084f733e48aff4b41b565011ce0711c5e392cfb0ab1b6791b94c408",
+        "29dba116152d1f786ce843ed24a3b573414d2177386a92dd8f14d65696ea5e32"
+      ],
+      "y": [
+        "69850938abea0112b57329f447e3a0cbad3e2fdb1a77f335e89e1408d0ef1c25",
+        "41e00a53dda532da1a7ce027b7a46f741006e85f5cdff0730e75c05fb4e3216d"
+      ]
+    },
+    "identity": {
+      "ascii": "Alice",
+      "hex": "416c696365"
+    },
+    "id_bar_hid": "416c69636501",
+    "H1": "2acc468c3926b0bdb2767e99ff26e084de9ced8dbc7d5fbf418027b667862fab",
+    "t1": "2acd7773bd808842f841d35f87070d795f6af8f3f08c915e760a451186b3f59f",
+    "t2": "291fe3cac8f58ad2dc462c8d4d578a94dafd5624ddc28e328d2936688a86cf1a",
+    "dsA": {
+      "x": "a5702f05cf1315305e2d6eb64b0deb923db1a0bcf0caff90523ac8754aa69820",
+      "y": "78559a844411f9825c109f5ee3f52d720dd01785392a727bb1556952b2b013d3"
+    },
+    "message": {
+      "ascii": "Chinese IBS standard",
+      "hex": "4368696e65736520494253207374616e64617264"
+    },
+    "g": [
+      "4e378fb5561cd0668f906b731ac58fee25738edf09cadc7a29c0abc0177aea6d",
+      "28b3404a61908f5d6198815c99af1990c8af38655930058c28c21bb539ce0000",
+      "38bffe40a22d529a0c66124b2c308dac9229912656f62b4facfced408e02380f",
+      "a01f2c8bee81769609462c69c96aa923fd863e209d3ce26dd889b55e2e3873db",
+      "67e0e0c2eed7a6993dce28fe9aa2ef56834307860839677f96685f2b44d0911f",
+      "5a1ae172102efd95df7338dbc577c66d8d6c15e0a0158c7507228efb078f42a6",
+      "1604a3fcfa9783e667ce9fcb1062c2a5c6685c316dda62de0548baa6ba30038b",
+      "93634f44fa13af76169f3cc8fbea880adaff8475d5fd28a75deb83c44362b439",
+      "b3129a75d31d17194675a1bc56947920898fbf390a5bf5d931ce6cbb3340f66d",
+      "4c744e69c4a2e1c8ed72f796d151a17ce2325b943260fc460b9f73cb57c9014b",
+      "84b87422330d7936eaba1109fa5a7a7181ee16f2438b0aeb2f38fd5f7554e57a",
+      "aab9f06a4eeba4323a7833db202e4e35639d93fa3305af73f0f071d7d284fcfb"
+    ],
+    "r": "00033c8616b06704813203dfd00965022ed15975c662337aed648835dc4b1cbe",
+    "w": [
+      "81377b8fdbc2839b4fa2d0e0f8aa6853bbbe9e9c4099608f8612c6078acd7563",
+      "815aeba217ad502da0f48704cc73cabb3c06209bd87142e14cbd99e8bca1680f",
+      "30dadc5cd9e207aee32209f6c3ca3ec0d800a1a42d33c73153ded47c70a39d2e",
+      "8eaf5d179a1836b359a9d1d9bfc19f2efcdb829328620962bd3fdf15f2567f58",
+      "a543d25609ae943920679194ed30328bb33fd15660bde485c6b79a7b32b01398",
+      "3f012db04ba59fe88db889321cc2373d4c0c35e84f7ab1ff33679bca575d6765",
+      "4f8624eb435b838cca77b2d0347e65d5e46964412a096f4150d8c5ede5440ddf",
+      "0656fcb663d24731e80292188a2471b8b68aa993899268499d23c89755a1a897",
+      "44643cead40f0965f28e1cd2895c3d118e4f65c9a0e3e741b6dd52c0ee2d25f5",
+      "898d60848026b7efb8fcc1b2442ecf0795f8a81cee99a6248f294c82c90d26bd",
+      "6a814aaf475f128aef43a128e37f80154ae6cb92cad7d1501bae30f750b3a9bd",
+      "1f96b08e97997363911314705bfb9a9dbb97f75553ec90fbb2ddae53c8f68e42"
+    ],
+    "M_bar_w": "4368696e65736520494253207374616e6461726481377b8fdbc2839b4fa2d0e0f8aa6853bbbe9e9c4099608f8612c6078acd7563815aeba217ad502da0f48704cc73cabb3c06209bd87142e14cbd99e8bca1680f30dadc5cd9e207aee32209f6c3ca3ec0d800a1a42d33c73153ded47c70a39d2e8eaf5d179a1836b359a9d1d9bfc19f2efcdb829328620962bd3fdf15f2567f58a543d25609ae943920679194ed30328bb33fd15660bde485c6b79a7b32b013983f012db04ba59fe88db889321cc2373d4c0c35e84f7ab1ff33679bca575d67654f8624eb435b838cca77b2d0347e65d5e46964412a096f4150d8c5ede5440ddf0656fcb663d24731e80292188a2471b8b68aa993899268499d23c89755a1a89744643cead40f0965f28e1cd2895c3d118e4f65c9a0e3e741b6dd52c0ee2d25f5898d60848026b7efb8fcc1b2442ecf0795f8a81cee99a6248f294c82c90d26bd6a814aaf475f128aef43a128e37f80154ae6cb92cad7d1501bae30f750b3a9bd1f96b08e97997363911314705bfb9a9dbb97f75553ec90fbb2ddae53c8f68e42",
+    "h": "823c4b21e4bd2dfe1ed92c606653e996668563152fc33f55d7bfbb9bd9705adb",
+    "l": "3406f1643496dff8385c82cf5f4442b0123e89abaf898013fb13ae36d9799108",
+    "S": {
+      "x": "73bf96923ce58b6ad0e13e9643a406d8eb98417c50ef1b29cef9adb48b6d598c",
+      "y": "856712f1c2e0968ab7769f42a99586aed139d5b8b3e15891827cc2aced9baa05"
+    },
+    "sig_S_uncompressed": "0473bf96923ce58b6ad0e13e9643a406d8eb98417c50ef1b29cef9adb48b6d598c856712f1c2e0968ab7769f42a99586aed139d5b8b3e15891827cc2aced9baa05",
+    "verify": {
+      "t": [
+        "b59486d6f3ae4649adf387c5a22790e42b98051a339b3403b17b1f2b38259efe",
+        "1632c30aa86001f52eefed517aa672d70f03af3ee9197017eda431436cfbdace",
+        "2f635b5b0243f6f4876a1d9149eafab71060ea4352de6d4a83b5f8f3df73eff0",
+        "3a27f33e024339b83f16e58ae524a5faa3e7fd009568a9ff23752bc8dd85b704",
+        "08208e26734bc66731aee530692b3ae277ea70d6bbaf8f485295d067e67b3b4f",
+        "1dbddd78126e962e950cebb385c3f7a3e0a5597f9c3b9fb3f5dac3daa85fd016",
+        "189e64a3c0a0d87611a83aec8f3a3688c0abf2f64860cf331463acb3a4aabb04",
+        "6e3fa26f762d1a2371601be00da702b1a726273ce843d991ce5c2eabab2eac6f",
+        "a5bcffd540ee56b5a26ccda566fd8abc3615cb7dea8f240e0bf4615816c2b23e",
+        "a074a0aa62a26c283f11543cecdea5242113fe2e982ccbda2d495ef6c05550a6",
+        "2e3f160c96c160595a1034b5156920668a7bee5e82e0b8be06963fddbdeb5aae",
+        "0dcf9ea28617b5965313b917d556da0d3a557c4112ce1c4a06b327d7dc18273d"
+      ],
+      "h1": "2acc468c3926b0bdb2767e99ff26e084de9ced8dbc7d5fbf418027b667862fab",
+      "P": {
+        "x": [
+          "511f2c823c7484ddfc16bbc53aad33b78d2429afcf7f8ad8b72261b4e1ffcf79",
+          "7b234e1d623a172aaa89164af3e828b4d0e49ce6ec5c7fe92e657272250cbaf6"
+        ],
+        "y": [
+          "4831dd313ec39fda59f3e14febcff7848d11875d805662d26969cf705d46ed70",
+          "73b542a69058f4601ac19f237203686368fec436c13c2b0761f9f9b6e14a36e4"
+        ]
+      },
+      "u": [
+        "a97a171304a0316fc8ba21b911289c4371e73b7d2163ac5b44f3b52588eb69a1",
+        "1838972bf0ca86e17147468a869a3261fcc27993aa50e36727918ed5abd71c0c",
+        "291663c49df9b4a82b122412b749bf144341f2e22564506145e0b77173496f50",
+        "abb3b115e006fae8ec3cb133f411df05b32cfa157716082deedf7bdb188966df",
+        "5fcc7dbdfc714fc8989e0331838142275eae6b6309bad1defe28263ad66e6780",
+        "48697f5c62ee4342325a9ef03775a52f1c0b9d5fb08d99e8d65a436b8a9af05e",
+        "5c53dc7e4d8a0b7557920b21fa5f2e75b38c4445f0cf9153ac4127240530f5d5",
+        "01bbd7b34565f80ccb4528093ce9fafdf6ad84fd620f3b5bc324da19bb665151",
+        "4ae8d62318d2ba35f9494189100bcd82f1b1399b0b14867700d3d7a243d02d3a",
+        "701409a66ed452dec4586735cf3631379501dc756466f6f18e3bc002722531ae",
+        "7b9a10ceb34f11956a04e3064663d87b844b452c3d81c91a8223938d1a9abbc4",
+        "753a274b8e9e35af503b7c2e39abb32bc8674fc8ec012d8bebdfff2fe0985f85"
+      ],
+      "w_prime": [
+        "81377b8fdbc2839b4fa2d0e0f8aa6853bbbe9e9c4099608f8612c6078acd7563",
+        "815aeba217ad502da0f48704cc73cabb3c06209bd87142e14cbd99e8bca1680f",
+        "30dadc5cd9e207aee32209f6c3ca3ec0d800a1a42d33c73153ded47c70a39d2e",
+        "8eaf5d179a1836b359a9d1d9bfc19f2efcdb829328620962bd3fdf15f2567f58",
+        "a543d25609ae943920679194ed30328bb33fd15660bde485c6b79a7b32b01398",
+        "3f012db04ba59fe88db889321cc2373d4c0c35e84f7ab1ff33679bca575d6765",
+        "4f8624eb435b838cca77b2d0347e65d5e46964412a096f4150d8c5ede5440ddf",
+        "0656fcb663d24731e80292188a2471b8b68aa993899268499d23c89755a1a897",
+        "44643cead40f0965f28e1cd2895c3d118e4f65c9a0e3e741b6dd52c0ee2d25f5",
+        "898d60848026b7efb8fcc1b2442ecf0795f8a81cee99a6248f294c82c90d26bd",
+        "6a814aaf475f128aef43a128e37f80154ae6cb92cad7d1501bae30f750b3a9bd",
+        "1f96b08e97997363911314705bfb9a9dbb97f75553ec90fbb2ddae53c8f68e42"
+      ],
+      "M_bar_w_prime": "4368696e65736520494253207374616e6461726481377b8fdbc2839b4fa2d0e0f8aa6853bbbe9e9c4099608f8612c6078acd7563815aeba217ad502da0f48704cc73cabb3c06209bd87142e14cbd99e8bca1680f30dadc5cd9e207aee32209f6c3ca3ec0d800a1a42d33c73153ded47c70a39d2e8eaf5d179a1836b359a9d1d9bfc19f2efcdb829328620962bd3fdf15f2567f58a543d25609ae943920679194ed30328bb33fd15660bde485c6b79a7b32b013983f012db04ba59fe88db889321cc2373d4c0c35e84f7ab1ff33679bca575d67654f8624eb435b838cca77b2d0347e65d5e46964412a096f4150d8c5ede5440ddf0656fcb663d24731e80292188a2471b8b68aa993899268499d23c89755a1a89744643cead40f0965f28e1cd2895c3d118e4f65c9a0e3e741b6dd52c0ee2d25f5898d60848026b7efb8fcc1b2442ecf0795f8a81cee99a6248f294c82c90d26bd6a814aaf475f128aef43a128e37f80154ae6cb92cad7d1501bae30f750b3a9bd1f96b08e97997363911314705bfb9a9dbb97f75553ec90fbb2ddae53c8f68e42",
+      "h2": "823c4b21e4bd2dfe1ed92c606653e996668563152fc33f55d7bfbb9bd9705adb"
+    }
+  },
+  "must_reject": [
+    {
+      "id": "N1",
+      "case": "same signature, message with its LAST byte flipped by one bit",
+      "rejected": true,
+      "why": "h2 != h"
+    },
+    {
+      "id": "N2",
+      "case": "same signature, message with the TOP bit of its first byte flipped",
+      "rejected": true,
+      "why": "h2 != h"
+    },
+    {
+      "id": "N3",
+      "case": "genuine signature verified under identity \"Bob\" instead of \"Alice\"",
+      "rejected": true,
+      "why": "h2 != h"
+    },
+    {
+      "id": "N4",
+      "case": "genuine signature verified under identity \"alice\" (ASCII case changed)",
+      "rejected": true,
+      "why": "h2 != h"
+    },
+    {
+      "id": "N5",
+      "case": "h component of the signature altered by one bit",
+      "rejected": true,
+      "why": "h2 != h"
+    },
+    {
+      "id": "N6",
+      "case": "S component moved off the curve (x + 1)",
+      "rejected": true,
+      "why": "S not on the curve"
+    },
+    {
+      "id": "N7",
+      "case": "S replaced by its negation -S (on the curve, wrong point)",
+      "rejected": true,
+      "why": "h2 != h"
+    },
+    {
+      "id": "N8",
+      "case": "h = 0, outside [1, N-1]",
+      "rejected": true,
+      "why": "h out of [1, N-1]"
+    }
+  ],
+  "caveats": [
+    {
+      "id": "h1-cancels-in-verification",
+      "severity": "high",
+      "claim": "An SM9 sign->verify round trip does NOT establish that H1, the identity encoding, or hid is correct.",
+      "why": "Extraction sets t1 = H1(ID||hid) + ks and t2 = ks * t1^-1, so t1*t2 == ks for ANY H1. Verification forms P = [H1]P2 + Ppub-s = [t1]P2 and S = [l*t2]P1, so u = e(S,P) = e(P1,P2)^(l*ks). H1 cancels. A consistently-wrong H1 yields the same u, the same signature component h, and verifies.",
+      "established_by": "gate2/h1-cancellation.mjs -- measured, with a 0x03-prefixed H1 variant shown to verify while producing a different ds_A",
+      "consequence": "the lab must check the annex-pinned H1 / t1 / t2 / ds_A values, not a round trip; and its displayed verdict must not claim a round trip proves identity binding"
+    },
+    {
+      "id": "fp12-pow-reduces-mod-p",
+      "severity": "low",
+      "claim": "GmSSL-JS fp12_pow() opens with \"k %= SM9_P\", reducing the exponent modulo the field characteristic p rather than the group order N.",
+      "why": "Every legitimate SM9 exponent is already < N < p, so it is a no-op for correct inputs. It would silently accept an out-of-range exponent instead of rejecting it.",
+      "established_by": "gate2/gate2cA-crosscheck.mjs leg 4 (N < p, r < N, h < N all checked)",
+      "consequence": "the protocol layer must reduce mod N itself and range-check h in [1, N-1]; it must not inherit that from the vendored engine"
+    },
+    {
+      "id": "annex-strips-leading-zeros",
+      "severity": "low",
+      "claim": "The annex prints ks and r with leading zeros stripped -- 62 nibbles, not 64.",
+      "why": "GmSSL C pins the same ks as \"000130E7...\" (64 nibbles). A byte-for-byte string comparison against the annex text fails unless scalars are left-padded or compared as integers.",
+      "established_by": "gate2/annexA-parse.mjs, which records rawHex length beside the padded value",
+      "consequence": "parse scalars as integers; never length-compare annex scalar text"
+    },
+    {
+      "id": "single-engine-pairing",
+      "severity": "medium",
+      "claim": "The Fp12 values (g, w, u, w′) are reproduced by ONE engine only.",
+      "why": "GmSSL C pinned vectors and a compiled GmSSL-C-over-OpenSSL-SM3 binary independently corroborate ks, ds_A and H1. No second pairing implementation was run, so the pairing agreement is with the STANDARD’s printed values, not between two engines.",
+      "established_by": "gate2/gate2cA-crosscheck.mjs leg 5, recorded as unavailable rather than as agreement",
+      "consequence": "the lab’s gmssl-node cross-check leg cannot close this either -- its SM9 API cannot import a pinned master key"
+    }
+  ],
+  "verified": {
+    "checks": 47,
+    "passed": 47,
+    "failed": 0,
+    "engine": "GmSSL-JS js/sm9.js (Apache-2.0), unmodified",
+    "hash": "SM3 via @li0ard/sm3, gate-2b verified",
+    "node": "v26.9.0"
+  }
+}

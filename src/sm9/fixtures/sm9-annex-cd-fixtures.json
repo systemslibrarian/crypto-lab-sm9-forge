@@ -1,0 +1,538 @@
+{
+  "_comment": "GM/T 0044.5-2016 Annex C (KEM) and Annex D (public key encryption), reproduced end to end.",
+  "source": {
+    "standard": "GM/T 0044.5-2016 (SM9 IBC algorithm, Part 5: Parameter definition)",
+    "file": "fresh-0044-5.pdf fetched from gmbz.org.cn",
+    "pdf_md5": "40cee7ca9ab2b885dee2158b2d4a12cc",
+    "text_md5": "771f705c5a5d82d22ba7fd1a92f4ef32",
+    "algorithms_from": "GM/T 0044.4-2016 §5.4.5 (MAC), §6 (KEM), §7 (public key encryption)",
+    "note": "Every `value` below is read out of the standard by line number; `reproduced` is set by recomputing it in fixtures-cd.mjs."
+  },
+  "conventions": {
+    "tower_serialisation": "The annexes print EVERY coefficient of the 1-2-4-12 tower in DESCENDING index order; GmSSL-JS stores them ascending. fp2 -> (a1||a0); fp12 -> full reversal i=2..0, j=1..0, k=1..0. Established from the printed P2 (L1138-1142), then confirmed on six 768-hex-char Fp12 blocks.",
+    "engine_affine_precondition": "GmSSL-JS point_add / twist_point_add read their SECOND operand as affine and ignore its Z; sm9_pairing reads its G1 argument as affine and calls twist_point_add on its G2 argument. point_mul / twist_point_mul RETURN Jacobian points. Normalise with point_get_affine / twist_point_get_affine before composing, or the result is silently off-curve.",
+    "mac": "GM/T 0044.4 §5.4.5: MAC(K2, Z) = Hv(Z || K2) -- message first, key second.",
+    "hid": "Encryption hid = 0x03, derived from the annex's own ID_B||hid minus ID_B (not transcribed)."
+  },
+  "system_parameters": {
+    "p": {
+      "value": "b640000002a3a6f1d603ab4ff58ec74521f2934b1a7aeedbe56f9b27e351457d",
+      "bytes": 32,
+      "source_lines": "1116-1117",
+      "reproduced": true
+    },
+    "N": {
+      "value": "b640000002a3a6f1d603ab4ff58ec74449f2934b18ea8beee56ee19cd69ecf25",
+      "bytes": 32,
+      "source_lines": "1121-1122",
+      "reproduced": true
+    },
+    "P1_x": {
+      "value": "93de051d62bf718ff5ed0704487d01d6e1e4086909dc3280e8c4e4817c66dddd",
+      "bytes": 32,
+      "source_lines": "1132-1132",
+      "reproduced": true
+    },
+    "P1_y": {
+      "value": "21fe8dda4f21e607631065125c395bbc1c1c00cbfa6024350c464cd70a3ea616",
+      "bytes": 32,
+      "source_lines": "1134-1134",
+      "reproduced": true
+    },
+    "P2_x": {
+      "value": "85aef3d078640c98597b6027b441a01ff1dd2c190f5e93c454806c11d88061413722755292130b08d2aab97fd34ec120ee265948d19c17abf9b7213baf82d65b",
+      "bytes": 64,
+      "source_lines": "1138-1139",
+      "reproduced": true
+    },
+    "P2_y": {
+      "value": "17509b092e845c1266ba0d262cbee6ed0736a96fa347c8bd856dc76b84ebeb96a7cf28d519be3da65f3170153d278ff247efba98a71a08116215bba5c999a7c7",
+      "bytes": 64,
+      "source_lines": "1141-1142",
+      "reproduced": true
+    },
+    "curve": "y^2 = x^3 + 5, BN256, cofactor 1, embedding degree 12, twist parameter -2"
+  },
+  "annex_C_kem": {
+    "hid": "03",
+    "ID_B_ascii": "Bob",
+    "ID_B": "426f62",
+    "ID_B_with_hid": "426f6203",
+    "klen_bits": {
+      "value_hex": "0100",
+      "value": 256,
+      "source_line": 1190
+    },
+    "master_encryption_private_key_ke": "01edee3778f441f8dea3d9fa0acc4e07ee36c93f9a08618af4ad85cede1c22",
+    "Ppub_e": {
+      "x": {
+        "value": "787ed7b8a51f3ab84e0a66003f32da5c720b17eca7137d39abc66e3c80a892ff",
+        "bytes": 32,
+        "source_lines": "1158-1158",
+        "reproduced": true
+      },
+      "y": {
+        "value": "769de61791e5adc4b9ff85a31354900b202871279a8c49dc3f220f644c57a7b1",
+        "bytes": 32,
+        "source_lines": "1160-1160",
+        "reproduced": true
+      }
+    },
+    "key_extraction": {
+      "H1_ID_hid": {
+        "value": "9cb1f6288ce0e51043ce72344582ffc301e0a812a7f5f2004b85547a24b82716",
+        "bytes": 32,
+        "source_lines": "1172-1173",
+        "reproduced": true
+      },
+      "t1": {
+        "value": "9cb3e416c459d9523cad160e3f8dcc1109cededbe78ffa61d67a01fff3964338",
+        "bytes": 32,
+        "source_lines": "1175-1175",
+        "reproduced": true
+      },
+      "t2": {
+        "value": "864e4d8391948b37535ecfa44c3f8d4e545ada502ff8229c7c32f529af406e06",
+        "bytes": 32,
+        "source_lines": "1180-1180",
+        "reproduced": true
+      },
+      "de_B_x": {
+        "value": "94736acd2c8c8796cc4785e938301a139a059d3537b6414140b2d31eecf41683115bae85f5d8bc6c3dbd9e5342979acccf3c2f4f28420b1cb4f8c0b59a19b158",
+        "bytes": 64,
+        "source_lines": "1184-1185",
+        "reproduced": true
+      },
+      "de_B_y": {
+        "value": "7aa5e47570da7600cd760a0cf7beaf71c447f3844753fe74fa7ba92ca7d3b55f27538a62e7f7bfb51dce08704796d94c9d56734f119ea44732b50e31cdeb75c1",
+        "bytes": 64,
+        "source_lines": "1187-1188",
+        "reproduced": true
+      }
+    },
+    "encapsulate": {
+      "A1_H1": {
+        "value": "9cb1f6288ce0e51043ce72344582ffc301e0a812a7f5f2004b85547a24b82716",
+        "bytes": 32,
+        "source_lines": "1198-1199",
+        "reproduced": true
+      },
+      "A1_Q_B_x": {
+        "value": "709d165808b0a43e2574e203fa885abcbab16a240c4c1916552e7c43d09763b8",
+        "bytes": 32,
+        "source_lines": "1201-1201",
+        "reproduced": true
+      },
+      "A1_Q_B_y": {
+        "value": "693269a6be2456f43333758274786b6051ff87b7f198da4ba1a2c6e336f51fcc",
+        "bytes": 32,
+        "source_lines": "1203-1203",
+        "reproduced": true
+      },
+      "A2_r": "74015f8489c01ef4270456f9e6475bfb602bde7f33fd482ab4e3684a6722",
+      "A3_C_x": {
+        "value": "1edee2c3f465914491de44cefb2cb434ab02c308d9dc5e2067b4fed5aaac8a0f",
+        "bytes": 32,
+        "source_lines": "1214-1214",
+        "reproduced": true
+      },
+      "A3_C_y": {
+        "value": "1c9b4c435eca35ab83bb734174c0f78fde81a53374aff3b3602bbc5e37be9a4c",
+        "bytes": 32,
+        "source_lines": "1216-1216",
+        "reproduced": true
+      },
+      "A4_g": {
+        "value": "9746fc5b231cedf36f835c47893d63c6ff652bcb92375ce3c2ab256d1fd56413232a2f80cfbae061f196bb99213d50306648ac33cdc78e8f8a1563ffbf3bd3eb68e8a16c0ac905f692904abcc004b1acf12106bd0a15b6e708d76e72b9288ef29436a60c403f4f8bac4dd3e393e25419e634fc2b3daf247f6092a802f60d5c58a140eaef3893d574cb83c01d951a53f51975760be57f3bbd89817498d215835295a2bcce25359d033fc654bd6a9e462e5bd0686ff6ddd7455f71fff15affd3f0b04320190b1e90cedf6ac570147a23ae6f0eae45034e6c62124dd6e8978f78ada504e3b43c1dd36794217fa1b05ac046c4131854c3d3e3a5b5967a64a861f0a2897f7b35d1c0e21d84d75cffac08c73e744a16a47ee76e28a0b03849888d10ff24443bb424b12c41eaf6d34d925205901f5cba59cfeba35224660db3848b0bf50825403fb3f681ab2b036dbba25483d5cb98bd56f3df95f0a7a705a2f6fd804b9ce7bc68062182cf5d9f4a98c5a4ed1f3b4ce4ea817d19ed7ef2ce98e6f5864d",
+        "bytes": 384,
+        "source_lines": "1220-1230",
+        "reproduced": true
+      },
+      "A5_w": {
+        "value": "8eab0cd6d0c95a6bbb7051ac848fdfb9689e5e5c486b1294557189b338b53b1d78082bb40152dc35ac774442cc6408ffd68494d9953d77bf55e30e84697f66745aaf52239e46b0373b3168bab75c32e048b5faebabfa1f7f9ba6b4c0c90e65b075f6a2d9ed54c87cddd2eaa787032320205e7ac7d7feaa8695ab2bf7f5710861247c2034ccf4a1432da1876d023ad6d74ff1678fda3af37a3d9f613cde8057988b07151bac93af48d78d86c26ea97f24e2dacc84104cce8791fe90ba61b2049caac6ab38ea07f9966173fd9bbf34aab58ee84cd3777a9fd00bbca1dc09cf8696a1040465bd723ae513c4be3ef2cfdc088a935f0b207deed7aad5ce2fc37d42034d874a4ce9b3b58765b1252a0880952b4ff3c97ea1a4cfdc67a0a0072541a03d3924eabc443b0503510b93bbcd98eb70e0192b821d14d69ccb2513a1a7421eb7a018a035e8fb61f271de1c5b3e781c63508c113b3eac537805eae164d732fad056bea27c8624d5064c9c278a193d63f6908ee558df5f5e0721317fc6e829c242",
+        "bytes": 384,
+        "source_lines": "1234-1244",
+        "reproduced": true
+      },
+      "A6_kdf_input": {
+        "value": "1edee2c3f465914491de44cefb2cb434ab02c308d9dc5e2067b4fed5aaac8a0f1c9b4c435eca35ab83bb734174c0f78fde81a53374aff3b3602bbc5e37be9a4c8eab0cd6d0c95a6bbb7051ac848fdfb9689e5e5c486b1294557189b338b53b1d78082bb40152dc35ac774442cc6408ffd68494d9953d77bf55e30e84697f66745aaf52239e46b0373b3168bab75c32e048b5faebabfa1f7f9ba6b4c0c90e65b075f6a2d9ed54c87cddd2eaa787032320205e7ac7d7feaa8695ab2bf7f5710861247c2034ccf4a1432da1876d023ad6d74ff1678fda3af37a3d9f613cde8057988b07151bac93af48d78d86c26ea97f24e2dacc84104cce8791fe90ba61b2049caac6ab38ea07f9966173fd9bbf34aab58ee84cd3777a9fd00bbca1dc09cf8696a1040465bd723ae513c4be3ef2cfdc088a935f0b207deed7aad5ce2fc37d42034d874a4ce9b3b58765b1252a0880952b4ff3c97ea1a4cfdc67a0a0072541a03d3924eabc443b0503510b93bbcd98eb70e0192b821d14d69ccb2513a1a7421eb7a018a035e8fb61f271de1c5b3e781c63508c113b3eac537805eae164d732fad056bea27c8624d5064c9c278a193d63f6908ee558df5f5e0721317fc6e829c242426f62",
+        "bytes": 451,
+        "source_lines": "1250-1262",
+        "reproduced": true
+      },
+      "A6_K": {
+        "value": "4ff5cf86d2ad40c8f4bac98d76abdbde0c0e2f0a829d3f911ef5b2bce0695480",
+        "bytes": 32,
+        "source_lines": "1264-1264",
+        "reproduced": true
+      }
+    },
+    "decapsulate": {
+      "B2_w": {
+        "value": "8eab0cd6d0c95a6bbb7051ac848fdfb9689e5e5c486b1294557189b338b53b1d78082bb40152dc35ac774442cc6408ffd68494d9953d77bf55e30e84697f66745aaf52239e46b0373b3168bab75c32e048b5faebabfa1f7f9ba6b4c0c90e65b075f6a2d9ed54c87cddd2eaa787032320205e7ac7d7feaa8695ab2bf7f5710861247c2034ccf4a1432da1876d023ad6d74ff1678fda3af37a3d9f613cde8057988b07151bac93af48d78d86c26ea97f24e2dacc84104cce8791fe90ba61b2049caac6ab38ea07f9966173fd9bbf34aab58ee84cd3777a9fd00bbca1dc09cf8696a1040465bd723ae513c4be3ef2cfdc088a935f0b207deed7aad5ce2fc37d42034d874a4ce9b3b58765b1252a0880952b4ff3c97ea1a4cfdc67a0a0072541a03d3924eabc443b0503510b93bbcd98eb70e0192b821d14d69ccb2513a1a7421eb7a018a035e8fb61f271de1c5b3e781c63508c113b3eac537805eae164d732fad056bea27c8624d5064c9c278a193d63f6908ee558df5f5e0721317fc6e829c242",
+        "bytes": 384,
+        "source_lines": "1274-1284",
+        "reproduced": true
+      },
+      "B3_kdf_input": {
+        "value": "1edee2c3f465914491de44cefb2cb434ab02c308d9dc5e2067b4fed5aaac8a0f1c9b4c435eca35ab83bb734174c0f78fde81a53374aff3b3602bbc5e37be9a4c8eab0cd6d0c95a6bbb7051ac848fdfb9689e5e5c486b1294557189b338b53b1d78082bb40152dc35ac774442cc6408ffd68494d9953d77bf55e30e84697f66745aaf52239e46b0373b3168bab75c32e048b5faebabfa1f7f9ba6b4c0c90e65b075f6a2d9ed54c87cddd2eaa787032320205e7ac7d7feaa8695ab2bf7f5710861247c2034ccf4a1432da1876d023ad6d74ff1678fda3af37a3d9f613cde8057988b07151bac93af48d78d86c26ea97f24e2dacc84104cce8791fe90ba61b2049caac6ab38ea07f9966173fd9bbf34aab58ee84cd3777a9fd00bbca1dc09cf8696a1040465bd723ae513c4be3ef2cfdc088a935f0b207deed7aad5ce2fc37d42034d874a4ce9b3b58765b1252a0880952b4ff3c97ea1a4cfdc67a0a0072541a03d3924eabc443b0503510b93bbcd98eb70e0192b821d14d69ccb2513a1a7421eb7a018a035e8fb61f271de1c5b3e781c63508c113b3eac537805eae164d732fad056bea27c8624d5064c9c278a193d63f6908ee558df5f5e0721317fc6e829c242426f62",
+        "bytes": 451,
+        "source_lines": "1290-1302",
+        "reproduced": true
+      },
+      "B3_K": {
+        "value": "4ff5cf86d2ad40c8f4bac98d76abdbde0c0e2f0a829d3f911ef5b2bce0695480",
+        "bytes": 32,
+        "source_lines": "1304-1304",
+        "reproduced": true
+      }
+    },
+    "failure_semantics": "GM/T 0044.4 §6.2.1: B1 verify C in G1 (else error); B2 pairing; B3 KDF, error only if K' = 0; B4 output K'. There is NO integrity check, so decapsulating with the wrong user key yields a DIFFERENT KEY SILENTLY."
+  },
+  "annex_D_encryption": {
+    "hid": "03",
+    "ID_B": "426f62",
+    "message_ascii": "Chinese IBE standard",
+    "message_hex": "4368696e65736520494245207374616e64617264",
+    "mlen_bits": {
+      "value_hex": "A0",
+      "value": 160,
+      "source_line": 1411
+    },
+    "K1_len_bits": {
+      "value_hex": "80",
+      "value": 128,
+      "source_line": 1413
+    },
+    "K2_len_bits": {
+      "value_hex": "0100",
+      "value": 256,
+      "source_line": 1415
+    },
+    "master_encryption_private_key_ke": "01edee3778f441f8dea3d9fa0acc4e07ee36c93f9a08618af4ad85cede1c22",
+    "Ppub_e": {
+      "x": {
+        "value": "787ed7b8a51f3ab84e0a66003f32da5c720b17eca7137d39abc66e3c80a892ff",
+        "bytes": 32,
+        "source_lines": "1375-1375",
+        "reproduced": true
+      },
+      "y": {
+        "value": "769de61791e5adc4b9ff85a31354900b202871279a8c49dc3f220f644c57a7b1",
+        "bytes": 32,
+        "source_lines": "1377-1377",
+        "reproduced": true
+      }
+    },
+    "key_extraction": {
+      "H1_ID_hid": {
+        "value": "9cb1f6288ce0e51043ce72344582ffc301e0a812a7f5f2004b85547a24b82716",
+        "bytes": 32,
+        "source_lines": "1389-1390",
+        "reproduced": true
+      },
+      "t1": {
+        "value": "9cb3e416c459d9523cad160e3f8dcc1109cededbe78ffa61d67a01fff3964338",
+        "bytes": 32,
+        "source_lines": "1392-1392",
+        "reproduced": true
+      },
+      "t2": {
+        "value": "864e4d8391948b37535ecfa44c3f8d4e545ada502ff8229c7c32f529af406e06",
+        "bytes": 32,
+        "source_lines": "1397-1397",
+        "reproduced": true
+      },
+      "de_B_x": {
+        "value": "94736acd2c8c8796cc4785e938301a139a059d3537b6414140b2d31eecf41683115bae85f5d8bc6c3dbd9e5342979acccf3c2f4f28420b1cb4f8c0b59a19b158",
+        "bytes": 64,
+        "source_lines": "1401-1402",
+        "reproduced": true
+      },
+      "de_B_y": {
+        "value": "7aa5e47570da7600cd760a0cf7beaf71c447f3844753fe74fa7ba92ca7d3b55f27538a62e7f7bfb51dce08704796d94c9d56734f119ea44732b50e31cdeb75c1",
+        "bytes": 64,
+        "source_lines": "1404-1405",
+        "reproduced": true
+      }
+    },
+    "common": {
+      "A1_Q_B_x": {
+        "value": "709d165808b0a43e2574e203fa885abcbab16a240c4c1916552e7c43d09763b8",
+        "bytes": 32,
+        "source_lines": "1430-1430",
+        "reproduced": true
+      },
+      "A1_Q_B_y": {
+        "value": "693269a6be2456f43333758274786b6051ff87b7f198da4ba1a2c6e336f51fcc",
+        "bytes": 32,
+        "source_lines": "1432-1432",
+        "reproduced": true
+      },
+      "A2_r": "aac0541779c8fc45e3e2cb25c12b5d2576b2129ae8bb5ee2cbe5ec9e785c",
+      "A3_C1_x": {
+        "value": "2445471164490618e1ee20528ff1d545b0f14c8bcaa44544f03dab5dac07d8ff",
+        "bytes": 32,
+        "source_lines": "1439-1439",
+        "reproduced": true
+      },
+      "A3_C1_y": {
+        "value": "42ffca97d57cddc05ea405f2e586feb3a6930715532b8000759f13059ed59ac0",
+        "bytes": 32,
+        "source_lines": "1441-1441",
+        "reproduced": true
+      },
+      "A4_g": {
+        "value": "9746fc5b231cedf36f835c47893d63c6ff652bcb92375ce3c2ab256d1fd56413232a2f80cfbae061f196bb99213d50306648ac33cdc78e8f8a1563ffbf3bd3eb68e8a16c0ac905f692904abcc004b1acf12106bd0a15b6e708d76e72b9288ef29436a60c403f4f8bac4dd3e393e25419e634fc2b3daf247f6092a802f60d5c58a140eaef3893d574cb83c01d951a53f51975760be57f3bbd89817498d215835295a2bcce25359d033fc654bd6a9e462e5bd0686ff6ddd7455f71fff15affd3f0b04320190b1e90cedf6ac570147a23ae6f0eae45034e6c62124dd6e8978f78ada504e3b43c1dd36794217fa1b05ac046c4131854c3d3e3a5b5967a64a861f0a2897f7b35d1c0e21d84d75cffac08c73e744a16a47ee76e28a0b03849888d10ff24443bb424b12c41eaf6d34d925205901f5cba59cfeba35224660db3848b0bf50825403fb3f681ab2b036dbba25483d5cb98bd56f3df95f0a7a705a2f6fd804b9ce7bc68062182cf5d9f4a98c5a4ed1f3b4ce4ea817d19ed7ef2ce98e6f5864d",
+        "bytes": 384,
+        "source_lines": "1445-1455",
+        "reproduced": true
+      },
+      "A5_w": {
+        "value": "63253798b7535975a90f202561fc54570fee88bf69e3b7a512697069e59e1f5d42d54b984af01d710ba0030c18738f6b14e4df472acaf89399228d85af117904b426dff040c49f9a43bcd7fd7d757b7d1d8d7311c08fc3b57616c5ee137785a328d19396dbdfac50eee62b1c7f994bb6f9bd9efb2221a1be1b6eb3e8f71485b4a3eef46e1b99f614d7bd7f57574ba7ebb502af0bdaba0787c5c4dbc56a344a25a06790b605cea0bbaf34776d6b1fc0198a02d05bbaac6f64a555ab2ca576f0dab405cbbf22197b94fd18d27da0b0e52c8754ee94279634691fea6e13ffd0584eaa2a94a7e2259b671896302b4275ae3e8cf2010098d5beaf19d0a6e60354e1c55c97e64f848b06d39ba8828ff59502c081d3dae68f35f7e6448db96d220a0fba02be03c51bf062b6f564ae0bfb42dca36e71d387512e3bccca3379b73ec4717652be92fb9e78ba9e1d80a156065804935742dbd2b967543011aac53333909fbf5fadec14a2fbd15248e77467442a69698246fb0314c7a8246d952219dd2144ed",
+        "bytes": 384,
+        "source_lines": "1459-1469",
+        "reproduced": true
+      },
+      "B2_w_decrypt": {
+        "value": "63253798b7535975a90f202561fc54570fee88bf69e3b7a512697069e59e1f5d42d54b984af01d710ba0030c18738f6b14e4df472acaf89399228d85af117904b426dff040c49f9a43bcd7fd7d757b7d1d8d7311c08fc3b57616c5ee137785a328d19396dbdfac50eee62b1c7f994bb6f9bd9efb2221a1be1b6eb3e8f71485b4a3eef46e1b99f614d7bd7f57574ba7ebb502af0bdaba0787c5c4dbc56a344a25a06790b605cea0bbaf34776d6b1fc0198a02d05bbaac6f64a555ab2ca576f0dab405cbbf22197b94fd18d27da0b0e52c8754ee94279634691fea6e13ffd0584eaa2a94a7e2259b671896302b4275ae3e8cf2010098d5beaf19d0a6e60354e1c55c97e64f848b06d39ba8828ff59502c081d3dae68f35f7e6448db96d220a0fba02be03c51bf062b6f564ae0bfb42dca36e71d387512e3bccca3379b73ec4717652be92fb9e78ba9e1d80a156065804935742dbd2b967543011aac53333909fbf5fadec14a2fbd15248e77467442a69698246fb0314c7a8246d952219dd2144ed",
+        "bytes": 384,
+        "source_lines": "1577-1587",
+        "reproduced": true
+      }
+    },
+    "mode_a_kdf_stream_cipher": {
+      "klen_bits": {
+        "value_hex": "01A0",
+        "value": 416,
+        "source_line": 1475
+      },
+      "kdf_input": {
+        "value": "2445471164490618e1ee20528ff1d545b0f14c8bcaa44544f03dab5dac07d8ff42ffca97d57cddc05ea405f2e586feb3a6930715532b8000759f13059ed59ac063253798b7535975a90f202561fc54570fee88bf69e3b7a512697069e59e1f5d42d54b984af01d710ba0030c18738f6b14e4df472acaf89399228d85af117904b426dff040c49f9a43bcd7fd7d757b7d1d8d7311c08fc3b57616c5ee137785a328d19396dbdfac50eee62b1c7f994bb6f9bd9efb2221a1be1b6eb3e8f71485b4a3eef46e1b99f614d7bd7f57574ba7ebb502af0bdaba0787c5c4dbc56a344a25a06790b605cea0bbaf34776d6b1fc0198a02d05bbaac6f64a555ab2ca576f0dab405cbbf22197b94fd18d27da0b0e52c8754ee94279634691fea6e13ffd0584eaa2a94a7e2259b671896302b4275ae3e8cf2010098d5beaf19d0a6e60354e1c55c97e64f848b06d39ba8828ff59502c081d3dae68f35f7e6448db96d220a0fba02be03c51bf062b6f564ae0bfb42dca36e71d387512e3bccca3379b73ec4717652be92fb9e78ba9e1d80a156065804935742dbd2b967543011aac53333909fbf5fadec14a2fbd15248e77467442a69698246fb0314c7a8246d952219dd2144ed426f62",
+        "bytes": 451,
+        "source_lines": "1485-1497",
+        "reproduced": true
+      },
+      "K": {
+        "value": "58373260f067ec48667c21c144f8bc33cd3049788651ffd5f738003e51df31174d0e4e402fd87f4581b612f74259db574f67ece6",
+        "bytes": 52,
+        "source_lines": "1499-1500",
+        "reproduced": true
+      },
+      "K1": {
+        "value": "58373260f067ec48667c21c144f8bc33cd304978",
+        "bytes": 20,
+        "source_lines": "1504-1504",
+        "reproduced": true
+      },
+      "C2": {
+        "value": "1b5f5b0e951489682f3e64e1378cdd5da9513b1c",
+        "bytes": 20,
+        "source_lines": "1506-1506",
+        "reproduced": true
+      },
+      "K2": {
+        "value": "8651ffd5f738003e51df31174d0e4e402fd87f4581b612f74259db574f67ece6",
+        "bytes": 32,
+        "source_lines": "1510-1510",
+        "reproduced": true
+      },
+      "C3": {
+        "value": "ba672387bcd6de5016a158a52bb2e7fc429197bcab70b25afee37a2b9db9f367",
+        "bytes": 32,
+        "source_lines": "1512-1512",
+        "reproduced": true
+      },
+      "ciphertext_C1_C3_C2": {
+        "value": "2445471164490618e1ee20528ff1d545b0f14c8bcaa44544f03dab5dac07d8ff42ffca97d57cddc05ea405f2e586feb3a6930715532b8000759f13059ed59ac0ba672387bcd6de5016a158a52bb2e7fc429197bcab70b25afee37a2b9db9f3671b5f5b0e951489682f3e64e1378cdd5da9513b1c",
+        "bytes": 116,
+        "source_lines": "1516-1519",
+        "reproduced": true
+      },
+      "decrypt": {
+        "kdf_input": {
+          "value": "2445471164490618e1ee20528ff1d545b0f14c8bcaa44544f03dab5dac07d8ff42ffca97d57cddc05ea405f2e586feb3a6930715532b8000759f13059ed59ac063253798b7535975a90f202561fc54570fee88bf69e3b7a512697069e59e1f5d42d54b984af01d710ba0030c18738f6b14e4df472acaf89399228d85af117904b426dff040c49f9a43bcd7fd7d757b7d1d8d7311c08fc3b57616c5ee137785a328d19396dbdfac50eee62b1c7f994bb6f9bd9efb2221a1be1b6eb3e8f71485b4a3eef46e1b99f614d7bd7f57574ba7ebb502af0bdaba0787c5c4dbc56a344a25a06790b605cea0bbaf34776d6b1fc0198a02d05bbaac6f64a555ab2ca576f0dab405cbbf22197b94fd18d27da0b0e52c8754ee94279634691fea6e13ffd0584eaa2a94a7e2259b671896302b4275ae3e8cf2010098d5beaf19d0a6e60354e1c55c97e64f848b06d39ba8828ff59502c081d3dae68f35f7e6448db96d220a0fba02be03c51bf062b6f564ae0bfb42dca36e71d387512e3bccca3379b73ec4717652be92fb9e78ba9e1d80a156065804935742dbd2b967543011aac53333909fbf5fadec14a2fbd15248e77467442a69698246fb0314c7a8246d952219dd2144ed426f62",
+          "bytes": 451,
+          "source_lines": "1603-1615",
+          "reproduced": true
+        },
+        "K": {
+          "value": "58373260f067ec48667c21c144f8bc33cd3049788651ffd5f738003e51df31174d0e4e402fd87f4581b612f74259db574f67ece6",
+          "bytes": 52,
+          "source_lines": "1617-1618",
+          "reproduced": true
+        },
+        "K1": {
+          "value": "58373260f067ec48667c21c144f8bc33cd304978",
+          "bytes": 20,
+          "source_lines": "1622-1622",
+          "reproduced": true
+        },
+        "M": {
+          "value": "4368696e65736520494245207374616e64617264",
+          "bytes": 20,
+          "source_lines": "1624-1624",
+          "reproduced": true
+        },
+        "K2": {
+          "value": "8651ffd5f738003e51df31174d0e4e402fd87f4581b612f74259db574f67ece6",
+          "bytes": 32,
+          "source_lines": "1628-1628",
+          "reproduced": true
+        },
+        "u": {
+          "value": "ba672387bcd6de5016a158a52bb2e7fc429197bcab70b25afee37a2b9db9f367",
+          "bytes": 32,
+          "source_lines": "1630-1630",
+          "reproduced": true
+        }
+      }
+    },
+    "mode_b_sm4_cbc_block_cipher": {
+      "klen_bits": {
+        "value_hex": "0180",
+        "value": 384,
+        "source_line": 1523
+      },
+      "cipher": "SM4 (GB/T 32907), CBC, IV = 16 zero bytes",
+      "padding": "l = K1_len/8 = 16; pad with l - (m mod l) bytes of that value (here 12 x 0xC)",
+      "kdf_input": {
+        "value": "2445471164490618e1ee20528ff1d545b0f14c8bcaa44544f03dab5dac07d8ff42ffca97d57cddc05ea405f2e586feb3a6930715532b8000759f13059ed59ac063253798b7535975a90f202561fc54570fee88bf69e3b7a512697069e59e1f5d42d54b984af01d710ba0030c18738f6b14e4df472acaf89399228d85af117904b426dff040c49f9a43bcd7fd7d757b7d1d8d7311c08fc3b57616c5ee137785a328d19396dbdfac50eee62b1c7f994bb6f9bd9efb2221a1be1b6eb3e8f71485b4a3eef46e1b99f614d7bd7f57574ba7ebb502af0bdaba0787c5c4dbc56a344a25a06790b605cea0bbaf34776d6b1fc0198a02d05bbaac6f64a555ab2ca576f0dab405cbbf22197b94fd18d27da0b0e52c8754ee94279634691fea6e13ffd0584eaa2a94a7e2259b671896302b4275ae3e8cf2010098d5beaf19d0a6e60354e1c55c97e64f848b06d39ba8828ff59502c081d3dae68f35f7e6448db96d220a0fba02be03c51bf062b6f564ae0bfb42dca36e71d387512e3bccca3379b73ec4717652be92fb9e78ba9e1d80a156065804935742dbd2b967543011aac53333909fbf5fadec14a2fbd15248e77467442a69698246fb0314c7a8246d952219dd2144ed426f62",
+        "bytes": 451,
+        "source_lines": "1529-1546",
+        "reproduced": true
+      },
+      "K": {
+        "value": "58373260f067ec48667c21c144f8bc33cd3049788651ffd5f738003e51df31174d0e4e402fd87f4581b612f74259db57",
+        "bytes": 48,
+        "source_lines": "1548-1549",
+        "reproduced": true
+      },
+      "K1_sm4_key": {
+        "value": "58373260f067ec48667c21c144f8bc33",
+        "bytes": 16,
+        "source_lines": "1553-1553",
+        "reproduced": true
+      },
+      "M_padded": {
+        "value": "4368696e65736520494245207374616e646172640c0c0c0c0c0c0c0c0c0c0c0c",
+        "bytes": 32,
+        "source_lines": "1555-1556",
+        "reproduced": true
+      },
+      "C2": {
+        "value": "e05b6fac6f11b965268c994f00dba7a8132c95745b2cacb382fbfd906d9ba86a",
+        "bytes": 32,
+        "source_lines": "1558-1558",
+        "reproduced": true
+      },
+      "K2": {
+        "value": "cd3049788651ffd5f738003e51df31174d0e4e402fd87f4581b612f74259db57",
+        "bytes": 32,
+        "source_lines": "1562-1562",
+        "reproduced": true
+      },
+      "C3": {
+        "value": "12af121de3795aa514d0c6e7949ce479807e8b03140dca09d18dd075e47eb03c",
+        "bytes": 32,
+        "source_lines": "1564-1564",
+        "reproduced": true
+      },
+      "ciphertext_C1_C3_C2": {
+        "value": "2445471164490618e1ee20528ff1d545b0f14c8bcaa44544f03dab5dac07d8ff42ffca97d57cddc05ea405f2e586feb3a6930715532b8000759f13059ed59ac012af121de3795aa514d0c6e7949ce479807e8b03140dca09d18dd075e47eb03ce05b6fac6f11b965268c994f00dba7a8132c95745b2cacb382fbfd906d9ba86a",
+        "bytes": 128,
+        "source_lines": "1568-1571",
+        "reproduced": true
+      },
+      "decrypt": {
+        "kdf_input": {
+          "value": "2445471164490618e1ee20528ff1d545b0f14c8bcaa44544f03dab5dac07d8ff42ffca97d57cddc05ea405f2e586feb3a6930715532b8000759f13059ed59ac063253798b7535975a90f202561fc54570fee88bf69e3b7a512697069e59e1f5d42d54b984af01d710ba0030c18738f6b14e4df472acaf89399228d85af117904b426dff040c49f9a43bcd7fd7d757b7d1d8d7311c08fc3b57616c5ee137785a328d19396dbdfac50eee62b1c7f994bb6f9bd9efb2221a1be1b6eb3e8f71485b4a3eef46e1b99f614d7bd7f57574ba7ebb502af0bdaba0787c5c4dbc56a344a25a06790b605cea0bbaf34776d6b1fc0198a02d05bbaac6f64a555ab2ca576f0dab405cbbf22197b94fd18d27da0b0e52c8754ee94279634691fea6e13ffd0584eaa2a94a7e2259b671896302b4275ae3e8cf2010098d5beaf19d0a6e60354e1c55c97e64f848b06d39ba8828ff59502c081d3dae68f35f7e6448db96d220a0fba02be03c51bf062b6f564ae0bfb42dca36e71d387512e3bccca3379b73ec4717652be92fb9e78ba9e1d80a156065804935742dbd2b967543011aac53333909fbf5fadec14a2fbd15248e77467442a69698246fb0314c7a8246d952219dd2144ed426f62",
+          "bytes": 451,
+          "source_lines": "1642-1659",
+          "reproduced": true
+        },
+        "K": {
+          "value": "58373260f067ec48667c21c144f8bc33cd3049788651ffd5f738003e51df31174d0e4e402fd87f4581b612f74259db57",
+          "bytes": 48,
+          "source_lines": "1661-1662",
+          "reproduced": true
+        },
+        "K1": {
+          "value": "58373260f067ec48667c21c144f8bc33",
+          "bytes": 16,
+          "source_lines": "1666-1666",
+          "reproduced": true
+        },
+        "M_padded": {
+          "value": "4368696e65736520494245207374616e646172640c0c0c0c0c0c0c0c0c0c0c0c",
+          "bytes": 32,
+          "source_lines": "1668-1668",
+          "reproduced": true
+        },
+        "K2": {
+          "value": "cd3049788651ffd5f738003e51df31174d0e4e402fd87f4581b612f74259db57",
+          "bytes": 32,
+          "source_lines": "1672-1672",
+          "reproduced": true
+        },
+        "u": {
+          "value": "12af121de3795aa514d0c6e7949ce479807e8b03140dca09d18dd075e47eb03c",
+          "bytes": 32,
+          "source_lines": "1674-1674",
+          "reproduced": true
+        }
+      }
+    },
+    "failure_semantics": "GM/T 0044.4 §7.2.1: B1 verify C1 in G1 (else error); B2 pairing; B3 KDF, error if K1' = 0; B4 u = MAC(K2', C2), if u != C3 report an error and exit; B5 output M'. The C3 check at B4 is what makes public key encryption fail closed -- the KEM has no equivalent.",
+    "negative_fixtures": [
+      {
+        "name": "mode-a C2 bit flipped (byte 100)",
+        "expect_reject_at": "B4",
+        "reason": "u != C3"
+      },
+      {
+        "name": "mode-a C3 bit flipped (byte 70)",
+        "expect_reject_at": "B4",
+        "reason": "u != C3"
+      },
+      {
+        "name": "mode-a C1 bit flipped (byte 10)",
+        "expect_reject_at": "B1",
+        "reason": "C1 no longer on the curve"
+      },
+      {
+        "name": "mode-b C2 bit flipped (byte 100)",
+        "expect_reject_at": "B4",
+        "reason": "u != C3"
+      },
+      {
+        "name": "mode-b C3 bit flipped (byte 70)",
+        "expect_reject_at": "B4",
+        "reason": "u != C3"
+      },
+      {
+        "name": "mode-b C1 bit flipped (byte 10)",
+        "expect_reject_at": "B1",
+        "reason": "C1 no longer on the curve"
+      },
+      {
+        "name": "C1 replaced by a VALID point from a different r",
+        "expect_reject_at": "B4",
+        "reason": "B1 passes because the point is on the curve; only the MAC catches it"
+      },
+      {
+        "name": "decryption under a different user private key",
+        "expect_reject_at": "B4",
+        "reason": "u != C3"
+      }
+    ]
+  },
+  "sm4_known_answer": {
+    "_comment": "GB/T 32907-2016 Appendix A.1, via IETF draft-ribose-cfrg-sm4-10 Appendix A.",
+    "key": "0123456789ABCDEFFEDCBA9876543210",
+    "plaintext": "0123456789ABCDEFFEDCBA9876543210",
+    "ciphertext_1_round": "681EDF34D206965E86B3E94F536E4246",
+    "ciphertext_1000000_rounds": "595298C7C6FD271F0402F804C33D3F66",
+    "implementation_verified": "@li0ard/sm4@0.1.0 passes both (see sm4-verify.mjs)"
+  }
+}

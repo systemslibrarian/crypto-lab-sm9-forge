@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'sha256-SJM30eGz+7CFmvonsriFRY0Sbg3r5a6QNqk8k6+zer8='; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'" />
+<script>
+  // Dark is the only theme. Pin it before first paint, and overwrite any
+  // 'light' a visitor stored back when the header carried a theme toggle.
+  (function () {
+    try {
+      localStorage.setItem('theme', 'dark');
+    } catch (e) {}
+    document.documentElement.setAttribute('data-theme', 'dark');
+  })();
+</script>
+<title>SM9 Forge — crypto-lab</title>
+<meta name="description" content="SM9 identity-based key extraction, digital signature, key exchange and public key encryption, run against the worked examples in GM/T 0044.5." />
+<link rel="icon" type="image/svg+xml"
+  href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🪪</text></svg>" />
+<link rel="stylesheet" href="./src/styles.css" />
+</head>
+<body>
+<header class="cl-topbar">
+  <a class="cl-topbar-skip" href="#app">Skip to content</a>
+  <a class="cl-topbar-home" href="https://crypto-lab.systemslibrarian.dev/">crypto-lab</a>
+  <nav class="cl-topbar-nav" aria-label="Lab links">
+    <a href="https://github.com/systemslibrarian/crypto-lab-sm9-forge">Source</a>
+  </nav>
+</header>
+
+<main id="app">
+  <header class="cl-hero">
+    <div class="cl-hero-main">
+      <h1 class="cl-hero-title">SM9 Forge</h1>
+      <p class="cl-hero-sub">GM/T 0044 · GB/T 38635 · ISO/IEC 14888-3 · ISO/IEC 18033-5</p>
+      <p class="cl-hero-desc">Extracts an identity key by inverting in the exponent, then runs SM9's signature, key exchange and encryption against the worked examples printed in the standard itself.</p>
+    </div>
+    <aside class="cl-hero-why" aria-label="Why it matters">
+      <span class="cl-hero-why-label">WHY IT MATTERS</span>
+      <p class="cl-hero-why-text">When your name is your public key, somebody has to mint the private one. SM9 gives that authority two master keys rather than one, so it can both read your mail and sign in your name — and the arithmetic that makes this convenient is the same arithmetic that makes a passing signature check prove less than it looks.</p>
+    </aside>
+  </header>
+
+  <p class="cl-scope-note">Not production cryptography — a teaching demo. Everything runs in your browser;
+  no key material leaves this page or is stored anywhere.</p>
+
+  <div id="panes"></div>
+</main>
+
+<footer class="scripture-footer">
+  <p>So whether you eat or drink or whatever you do, do it all for the glory of God. — 1 Corinthians 10:31</p>
+</footer>
+
+<script type="module" src="./src/main.ts"></script>
+</body>
+</html>

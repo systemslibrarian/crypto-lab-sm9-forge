@@ -1,0 +1,29 @@
+{
+  "name": "crypto-lab-sm9-forge",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run && node --test test/csp.test.js",
+    "test:watch": "vitest",
+    "test:a11y": "playwright test --project=a11y",
+    "test:e2e": "playwright test --project=claims",
+    "test:oracle": "vitest run src/sm9/oracle.test.ts"
+  },
+  "dependencies": {
+    "@li0ard/sm3": "^0.1.1",
+    "@li0ard/sm4": "^0.1.0"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@playwright/test": "^1.62.1",
+    "@types/node": "^26.4.0",
+    "playwright": "^1.62.1",
+    "typescript": "~5.9.3",
+    "vite": "^8.2.2",
+    "vitest": "^4.1.10"
+  }
+}
