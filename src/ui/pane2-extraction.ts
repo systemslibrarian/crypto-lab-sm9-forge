@@ -305,7 +305,7 @@ function comparisonTable(): HTMLElement {
         el('span', { text: 'consequence for this lab' }),
         el('span', { text: 'the identity survives into the key as a point' }),
         el('span', {
-          text: 't1·t2 = ks for any h1 at all, so H1 cancels out of verification — see panes 3 and 5',
+          text: 't1·t2 = ks for any h1 at all, so a verifier using the SAME h1 accepts whichever one it is — see panes 3 and 5',
         }),
       ],
     ],
@@ -481,7 +481,7 @@ export function buildPane2(): HTMLElement {
       note(
         [
           el('strong', { text: 'These pinned values are the only check that catches a wrong H1. ' }),
-          'A sign-then-verify round trip cannot, because H1 cancels; see panes 3 and 5. An '
+          'A sign-then-verify round trip cannot tell you WHICH identity-to-scalar map was used, only that both sides used the same one; see panes 3 and 5. An '
             + 'implementation that hashed identities wrongly but consistently would pass every round '
             + 'trip it ran against itself and fail exactly this table.',
         ],

@@ -115,10 +115,14 @@ export function encodeIdentity(identity: string | Uint8Array, hid: number): Uint
  * The identity-to-scalar map extraction and verification must agree on.
  *
  * It is a parameter rather than a hard-wired call to H1 for one reason, and the
- * reason is this lab's headline negative claim: H1 CANCELS in the verification
- * equation, so an implementation can use a wrong one consistently and still pass
- * every round trip. Making it injectable is what lets sign.test.ts DEMONSTRATE
- * that rather than assert it. See the `h1CancelsInVerification` block there.
+ * reason is this lab's headline negative claim: H1 cancels in the verification
+ * equation when BOTH sides use the same one, so a KGC and a verifier that agree
+ * on a non-standard map pass every round trip between them. It does not mean
+ * identity goes unchecked -- a key extracted under one map and verified under
+ * another is refused at HASH-MISMATCH, as is a key for a different identity or a
+ * different hid. Making the map injectable is what lets sign.test.ts DEMONSTRATE
+ * the agreeing case rather than assert it. See the `h1CancelsInVerification`
+ * block there, which pins the refusals alongside it.
  */
 export type IdentityHash = (idWithHid: Uint8Array) => bigint;
 

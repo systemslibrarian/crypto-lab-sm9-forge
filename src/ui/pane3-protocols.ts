@@ -336,7 +336,7 @@ function buildActA(): HTMLElement {
     defer(() => {
       // A deliberately wrong identity-to-scalar map: the real H1 with one extra
       // domain byte in front. It is a perfectly good hash and it is not SM9's.
-      const brokenH1: IdentityHash = (idWithHid) => H1(concatBytes(Uint8Array.of(0xff), idWithHid), N).h;
+      const brokenH1: IdentityHash = (idWithHid) => H1(concatBytes(Uint8Array.of(), idWithHid), N).h;
 
       const honest = signerState();
       const broken = signerState(brokenH1);
@@ -379,8 +379,12 @@ function buildActA(): HTMLElement {
             'An SM9 sign → verify round trip does NOT prove that H1, the identity encoding, or hid is '
               + 'correct. Extraction sets t1 = H1 + ks and t2 = ks · t1⁻¹, so t1 · t2 = ks for ANY H1 '
               + 'whatsoever. Verification forms P = [H1]P2 + Ppub-s = [t1]P2 and S = [l · t2]P1, and takes '
-              + 'u = e(S, P) = e(P1, P2)^(l · t2 · t1) = e(P1, P2)^(l · ks). H1 CANCELS. The verifier never '
-              + 'learns which identity was used — only that extraction and verification used the same one.',
+              + 'u = e(S, P) = e(P1, P2)^(l · t2 · t1) = e(P1, P2)^(l · ks). H1 CANCELS — provided BOTH '
+              + 'sides use the same one. What a passing check cannot tell you is WHICH identity-to-scalar '
+              + 'map produced the key; it establishes that extraction and verification agreed on one. '
+              + 'It does NOT mean identity goes unchecked: point SM9\'s real verifier at this same key '
+              + 'and it is refused at HASH-MISMATCH, as the row below shows, and so are a key for another '
+              + 'identity and a key extracted at a different hid.',
           ],
           true,
           'p3a-wrongh1-limitation',

@@ -715,7 +715,14 @@ test.describe('pane 3 (a) — the wrong-H1 negative-claim fixture', () => {
     const stated = await text(page, 'p3a-wrongh1-limitation');
     expect(stated).toMatch(/does NOT prove that H1, the identity encoding, or hid is/);
     expect(stated).toMatch(/H1 CANCELS/);
-    expect(stated).toMatch(/only that extraction and verification used the same one/);
+    expect(stated).toMatch(/provided BOTH sides use the same one/);
+    // The SCOPING clause is the part that keeps this claim honest. Without it the
+    // sentence reads as "SM9 verification does not check identity", which is false:
+    // h1 = H1(ID||hid) really does feed P = [h1]P2 + Ppub-s. Assert the limits are
+    // stated in the same breath as the limitation.
+    expect(stated).toMatch(/does NOT mean identity goes unchecked/i);
+    expect(stated).toMatch(/refused at HASH-MISMATCH/);
+    expect(stated).toMatch(/a key for another identity and a key extracted at a different hid/);
 
     // ... and it names what WOULD catch it, so the limitation is actionable
     // rather than merely admitted.

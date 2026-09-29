@@ -12,7 +12,8 @@
  *     P = [H1]P2 + Ppub-s = [t1]P2        S = [l]ds_A = [l * t2]P1
  * and takes
  *     u = e(S, P) = e(P1, P2)^(l * t2 * t1) = e(P1, P2)^(l * ks).
- * H1 cancels. The verification equation never learns WHICH identity was used —
+ * H1 cancels when both sides use the same one. The equation does not pin WHICH
+ * identity-to-scalar map produced the key —
  * only that extraction and verification used the SAME one.
  *
  * This was established by running it, not by reading the algebra: an H1 with a

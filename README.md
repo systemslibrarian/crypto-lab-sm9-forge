@@ -26,8 +26,9 @@ and **inverts** — `t1 = H1(ID‖hid, N) + ks`, `t2 = ks · t1⁻¹`, `ds_A = [
 hash-to-curve appears anywhere in SM9 key extraction. That one structural difference
 pays for itself twice over: SM9 carries **two** master key pairs in mirrored pairing
 groups, so the authority can both read your mail and sign in your name; and the
-inversion makes the identity **cancel out** of the protocol outputs, so a signature
-that verifies proves less than it appears to.
+inversion makes the identity hash **cancel** out of the verification equation, so a
+passing check proves that extraction and verification agreed on a map, not that either
+of them used SM9's.
 
 **Security model.** Every private key in SM9 is derivable by the KGC from the identity
 alone, by design. There is no forward secrecy against the KGC and no way to opt out:
@@ -77,14 +78,29 @@ page.
 
 ## What Can Go Wrong
 
-**A round trip does not prove the identity binding.** This is the lab's headline
-finding and it is demonstrable on the page. Extraction sets `t1 = H1 + ks` and
-`t2 = ks · t1⁻¹`, so `t1 · t2 = ks` for *any* H1. Verification forms `P = [t1]P2` and
-`S = [l·t2]P1`, so `u = e(S, P) = e(P1, P2)^(l·ks)` — **H1 cancels**. Extract with a
-deliberately wrong H1, sign, and the real verifier accepts. Only the pinned
-`h1`/`t1`/`t2`/`ds_A` values detect it. The same cancellation runs through key
-exchange: `g1`, `g2` and `g3` are `hid`-independent, because `t3` cancels inside
-`e(R_A, de_B)`, and `hid` reaches the session key only through the KDF input.
+**A passing check does not pin which identity-to-scalar map produced the key.**
+This is the lab's headline finding, and it needs stating precisely because the loose
+version of it is false. SM9 verification *does* check the identity binding:
+`h1 = H1(ID‖hid, N)` feeds `P = [h1]P2 + Ppub-s`, and a key for another identity, a
+key extracted at a different `hid`, or a key extracted under a non-standard H1 are all
+refused at `HASH-MISMATCH`.
+
+What the equation does not pin is *which* map both sides used. Extraction sets
+`t1 = H1 + ks` and `t2 = ks · t1⁻¹`, so `t1 · t2 = ks` for any H1 whatsoever, and
+verification computes `u = e(S, P) = e(P1, P2)^(l·ks)` — **H1 cancels, provided both
+sides use the same one.** So a KGC and a verifier that agree on a non-standard
+identity hash interoperate perfectly, and their green check says nothing about
+conformance to SM9. Pane 3 runs exactly that: the same identity and the same `hid`,
+with one extra domain byte in front of H1 on *both* sides, and the page's own
+unmodified verifier accepts — while the row beneath shows SM9's real verifier refusing
+the same key.
+
+**Conformance is not self-certifying, and the fleet has a real instance of it.** The
+same structure runs through key exchange, where `g1`, `g2` and `g3` are
+`hid`-independent because `t3` cancels inside `e(R_A, de_B)`, so `hid` reaches the
+session key only through the KDF input. That is not a hypothetical: GmSSL and the
+standard's own Annex B disagree about `hid` for key exchange, each is internally
+consistent, and each produces passing checks against itself. Pane 5 runs both.
 
 **The KEM has no integrity check, and public key encryption does.** GM/T 0044.4
 clause 6.2.1 is: check `C` is in G1, pair, KDF, output — with an error only if `K' = 0`.
