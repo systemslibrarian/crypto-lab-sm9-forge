@@ -336,7 +336,7 @@ function buildActA(): HTMLElement {
     defer(() => {
       // A deliberately wrong identity-to-scalar map: the real H1 with one extra
       // domain byte in front. It is a perfectly good hash and it is not SM9's.
-      const brokenH1: IdentityHash = (idWithHid) => H1(concatBytes(Uint8Array.of(), idWithHid), N).h;
+      const brokenH1: IdentityHash = (idWithHid) => H1(concatBytes(Uint8Array.of(0xff), idWithHid), N).h;
 
       const honest = signerState();
       const broken = signerState(brokenH1);
