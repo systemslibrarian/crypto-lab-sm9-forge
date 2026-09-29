@@ -83,6 +83,34 @@ interface HashVector {
 
 const VECTORS = hashVectorsJson.vectors as unknown as HashVector[];
 
+/**
+ * A deliberately WRONG vector, run alongside the real ones as a negative control.
+ *
+ * Every genuine vector here passes, which sounds like good news and is actually a
+ * measurement problem: a checker that only ever sees agreement is indistinguishable
+ * from a checker that cannot report disagreement. Mutating the per-vector comparison
+ * to `actual === expected || true` left the whole claims suite green for exactly that
+ * reason -- there was no case the change could alter.
+ *
+ * This row fixes that. It is the Annex A H1 input with one nibble of its EXPECTED
+ * value changed, so the correct answer is that it does NOT match. The page asserts
+ * it is reported as a mismatch, and the totals count it separately from the real
+ * vectors so it can never be mistaken for one.
+ */
+const CONTROL_VECTOR: HashVector = (() => {
+  const source = VECTORS.find((v) => v.fn === 'H1' && v.annex !== 'GENERATED');
+  if (source === undefined) throw new Error('no annex H1 vector to build the control from');
+  const flipped = source.expected_hex.toLowerCase();
+  const lastNibble = flipped.slice(-1);
+  return {
+    ...source,
+    id: 'CONTROL-must-fail',
+    annex: 'CONTROL',
+    description: 'negative control: the same input with one nibble of the expected value changed',
+    expected_hex: flipped.slice(0, -1) + (lastNibble === '0' ? '1' : '0'),
+  };
+})();
+
 /** A one-byte identifier as the standard writes it, rendered from the constant
  *  rather than retyped — a literal here could drift from params.ts in silence. */
 function hexByte(value: number): string {
@@ -264,12 +292,15 @@ function vectorRow(run: VectorRun): HTMLElement[] {
     el('span', { text: String(run.sm3Blocks) }),
     el('div', {}, [
       matchMark(run.passed, `p1-vec-${vector.id}`),
-      run.passed
-        ? null
-        : el('div', {}, [
-            hexBlock(`expected ${run.expected}`),
-            hexBlock(`  actual ${run.actual}`),
-          ]),
+      // Both values are rendered ALWAYS, not only when they disagree. A tick that
+      // is the only evidence for its own claim cannot be checked by anything -- a
+      // source mutation that made `passed` unconditionally true left the whole
+      // claims suite green precisely because the numbers behind it were hidden on
+      // the passing path. Printing both makes the badge falsifiable from the page.
+      el('div', {}, [
+        hexBlock(run.expected, `p1-vec-${vector.id}-expected`),
+        hexBlock(run.actual, `p1-vec-${vector.id}-actual`),
+      ]),
     ]),
   ];
 }
@@ -355,6 +386,9 @@ export function buildPane1(): HTMLElement {
     clear(results);
     defer(() => {
       const runs = VECTORS.map(runVector);
+      // Run the negative control beside them. It MUST be reported as a mismatch;
+      // if it ever passes, the comparison has stopped comparing.
+      const control = runVector(CONTROL_VECTOR);
       const passed = runs.filter((r) => r.passed).length;
       const failed = runs.length - passed;
       const published = runs.filter((r) => r.vector.annex !== 'GENERATED');
@@ -364,6 +398,14 @@ export function buildPane1(): HTMLElement {
         statusPill(failed === 0 ? 'ok' : 'bad', failed === 0 ? 'ALL VECTORS REPRODUCED' : 'FAILURES', 'p1-sm3-status'),
         ' ',
         el('span', { text: `${passed} passed`, testid: 'p1-sm3-passed' }),
+        ' ',
+        statusPill(
+          control.passed ? 'bad' : 'ok',
+          control.passed
+            ? 'NEGATIVE CONTROL PASSED — the comparison has stopped comparing'
+            : 'negative control correctly reported as a mismatch',
+          'p1-sm3-control',
+        ),
         ' · ',
         el('span', { text: `${failed} failed`, testid: 'p1-sm3-failed' }),
         ' · ',
@@ -385,7 +427,12 @@ export function buildPane1(): HTMLElement {
       replace(results, [
         tableEl(
           ['Vector', 'Function', 'Source', 'Z bytes', 'SM3 message bytes', '64-byte blocks', 'Result'],
-          runs.map(vectorRow),
+          // The negative control is rendered as a row like any other, so its printed
+          // values can be compared against its badge exactly as the real vectors are.
+          // Keeping it as a summary pill only left it unfalsifiable: a mutation that
+          // printed the expected value in place of the computed one changed nothing
+          // any test could see, because no rendered row disagreed with itself.
+          [...runs, control].map(vectorRow),
           'p1-sm3-table',
           'Every SM3 layer vector, with its result',
         ),

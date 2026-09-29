@@ -252,10 +252,27 @@ async function readVectorRows(page: Page): Promise<VectorRow[]> {
   return parsed;
 }
 
+/**
+ * Run the SM3 layer and return the REAL vector rows.
+ *
+ * The table also renders a deliberately-wrong negative control, which is excluded
+ * here and asserted separately. It exists because every genuine vector passes, and
+ * a checker that has only ever been seen agreeing is indistinguishable from one
+ * that cannot disagree: a source mutation forcing the comparison true survived the
+ * whole suite until this control was added.
+ */
 async function runSm3(page: Page): Promise<VectorRow[]> {
   await at(page, 'p1-run-sm3').click();
   await expect(at(page, 'p1-sm3-table')).toHaveCount(1);
-  return readVectorRows(page);
+  const all = await readVectorRows(page);
+  const control = all.filter((row) => isControlRow(row));
+  expect(control.length, 'the negative control row must be present').toBe(1);
+  expect(control[0].passed, 'the negative control MUST be reported as failing').toBe(false);
+  return all.filter((row) => !isControlRow(row));
+}
+
+function isControlRow(row: VectorRow): boolean {
+  return /CONTROL/i.test(row.vector) || /negative control/i.test(row.source);
 }
 
 test.describe('pane 1 — the SM3 layer', () => {
@@ -1159,4 +1176,77 @@ test('the security level is published as a range, both figures attributed, neith
   expect(table).not.toContain(String((mss + bd) / 2));
   expect(await text(page, 'security-range')).toMatch(/Read it as a range/);
   expect(await text(page, 'security-scope')).toMatch(/does not\s+transfer to BN256/);
+});
+
+/**
+ * A mutation that survived, and the test written to stop it surviving again.
+ *
+ * Forcing pane 1's per-vector `passed` flag unconditionally true left every claims
+ * test green: the suite checked passed + failed = total, which still holds when
+ * everything "passes", and the row printed its expected/actual pair only on the
+ * FAILING path, so on the mutated build there was nothing on screen to contradict
+ * the tick. The page has been changed to print both values on every row, and this
+ * test cross-checks the badge against them -- two values the page itself printed,
+ * which is the rule the whole suite is built on.
+ */
+test('every SM3 vector badge agrees with the two values printed beside it', async ({ page }) => {
+  await page.goto('./');
+  await page.getByTestId('p1-run-sm3').click();
+  await expect(page.getByTestId('p1-sm3-results')).toBeVisible();
+
+  const rows = await page.locator('[data-testid^="p1-vec-"][data-testid$="-actual"]').all();
+  expect(rows.length).toBeGreaterThan(20);
+
+  let agreeing = 0;
+  for (const actualCell of rows) {
+    const testid = await actualCell.getAttribute('data-testid');
+    const id = testid!.replace(/-actual$/, '');
+    const actual = ((await actualCell.textContent()) ?? '').trim();
+    const expectedText = ((await page.getByTestId(`${id}-expected`).textContent()) ?? '').trim();
+    const badge = page.getByTestId(id);
+    const badgeClass = (await badge.getAttribute('class')) ?? '';
+
+    if (/CONTROL/i.test(id)) {
+      // The control is the one row whose values MUST differ and whose badge MUST
+      // say so. Asserted here rather than skipped.
+      expect(actual, `${id}: the control's computed and expected values must differ`).not.toBe(
+        expectedText,
+      );
+      expect(badgeClass).not.toMatch(/status-ok/);
+      continue;
+    }
+    const claimsMatch = /status-ok|match/.test(badgeClass);
+    const reallyMatches = actual.length > 0 && actual === expectedText;
+    expect(
+      claimsMatch,
+      `${id}: badge says ${claimsMatch ? 'match' : 'mismatch'} but the printed values ` +
+        `${reallyMatches ? 'agree' : 'differ'}\n  expected ${expectedText}\n  actual   ${actual}`,
+    ).toBe(reallyMatches);
+    if (reallyMatches) agreeing++;
+  }
+
+  // The totals the page prints must equal what the rows actually show.
+  const passedText = ((await page.getByTestId('p1-sm3-passed').textContent()) ?? '').trim();
+  expect(Number(passedText.replace(/\D+/g, ''))).toBe(agreeing);
+});
+
+/**
+ * The negative control must be reported as failing.
+ *
+ * This is the assertion that gives every other badge in pane 1 its meaning: if a
+ * deliberately-wrong vector is reported as matching, the comparison is not
+ * comparing, and the 30 green ticks beside it are worth nothing.
+ */
+test('pane 1 runs a deliberately wrong vector and reports it as a mismatch', async ({ page }) => {
+  await page.goto('./');
+  await page.getByTestId('p1-run-sm3').click();
+  const control = page.getByTestId('p1-sm3-control');
+  await expect(control).toBeVisible();
+  await expect(control).toHaveClass(/status-ok/);
+  await expect(control).toContainText(/correctly reported as a mismatch/i);
+
+  // And the control is not silently counted among the real vectors.
+  const passed = Number(((await page.getByTestId('p1-sm3-passed').textContent()) ?? '').replace(/\D+/g, ''));
+  const total = Number(((await page.getByTestId('p1-sm3-total').textContent()) ?? '').replace(/\D+/g, ''));
+  expect(passed).toBe(total);
 });
