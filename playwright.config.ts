@@ -15,7 +15,7 @@ import { defineConfig } from '@playwright/test';
  * `baseURL` is what the specs resolve `./` against, `webServer.command` is what
  * actually binds, and `webServer.url` is what Playwright polls before starting.
  */
-const PORT = 4646;
+const PORT = 4711;
 const BASE = `http://localhost:${PORT}/crypto-lab-sm9-forge/`;
 
 export default defineConfig({
