@@ -214,6 +214,11 @@ is already answering on it — a cold run here was silently judged against
 
 ## Build & Verify
 
+The production type-check uses the native TypeScript 7 compiler. The SM3 and
+SM4 packages currently declare TypeScript 5 JavaScript-API peers, so that API
+stays installed side-by-side; `npm run check:typescript` guards both identities
+and strict native-compiler rejection controls without bypassing peer validation.
+
 **419 unit tests, 35 rendered-verdict claims tests, a 26-test independent cross-check
 and a 5-test geometry gate.** The accessibility gate scans the production build at
 1280px and 380px across 20 driven states each — the guided path a visitor actually
