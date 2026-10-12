@@ -5,9 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "build": "npm run check:typescript && node node_modules/@typescript/native/bin/tsc --noEmit && vite build",
+    "check:typescript": "node --test test/tooling.node.mjs",
     "preview": "vite preview",
-    "test": "vitest run && node --test test/csp.test.js",
+    "test": "vitest run && node --test test/csp.test.js test/tooling.node.mjs",
     "test:watch": "vitest",
     "test:a11y": "playwright test --project=a11y",
     "test:e2e": "playwright test --project=claims",
@@ -23,7 +24,8 @@
     "@playwright/test": "^1.62.1",
     "@types/node": "^26.6.4",
     "playwright": "^1.62.1",
-    "typescript": "~7.0.2",
+    "@typescript/native": "npm:typescript@7.0.2",
+    "typescript": "~5.9.3",
     "vite": "^8.3.2",
     "vitest": "^5.0.3"
   }
