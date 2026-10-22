@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npm run check:typescript && node node_modules/@typescript/native/bin/tsc --noEmit && vite build",
+    "build": "npm run check:typescript && npm run test:maintenance && node node_modules/@typescript/native/bin/tsc --noEmit && vite build",
     "check:typescript": "node --test test/tooling.node.mjs",
     "preview": "vite preview",
     "test": "vitest run && node --test test/csp.test.js test/tooling.node.mjs",
@@ -13,7 +13,8 @@
     "test:a11y": "playwright test --project=a11y",
     "test:e2e": "playwright test --project=claims",
     "test:geometry": "playwright test --project=geometry",
-    "test:oracle": "vitest run src/sm9/oracle.test.ts"
+    "test:oracle": "vitest run src/sm9/oracle.test.ts",
+    "test:maintenance": "node --test test/maintenance-controls.node.mjs"
   },
   "dependencies": {
     "@li0ard/sm3": "^0.1.1",

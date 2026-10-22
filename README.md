@@ -194,7 +194,7 @@ npm run dev
 claims suite, `npm run test:a11y` the accessibility gate and `npm run test:geometry`
 the visual-quality gate; all three need `npx playwright install chromium` first.
 
-The browser gates build first and serve the production build on **port 4646**, which is
+The browser gates build first and serve the production build on **port 4711**, which is
 this lab's own rather than Vite's default 4173. That is not a preference: several labs
 in this fleet kept the default, and `reuseExistingServer` then hands the suites whatever
 is already answering on it — a cold run here was silently judged against
@@ -219,7 +219,7 @@ SM4 packages currently declare TypeScript 5 JavaScript-API peers, so that API
 stays installed side-by-side; `npm run check:typescript` guards both identities
 and strict native-compiler rejection controls without bypassing peer validation.
 
-**419 unit tests, 35 rendered-verdict claims tests, a 26-test independent cross-check
+**419 unit tests, 37 rendered-verdict claims tests, a 26-test independent cross-check
 and a 5-test geometry gate.** The accessibility gate scans the production build at
 1280px and 380px across 20 driven states each — the guided path a visitor actually
 walks, including the locked, collapsed and Full-evidence renderings — and blocks the
