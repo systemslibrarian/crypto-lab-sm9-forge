@@ -36,17 +36,62 @@ function cspContent() {
   return m[1];
 }
 
-/** Inline <script> elements only — those with a src attribute are governed by 'self'. */
-function inlineScripts() {
+/**
+ * Inline <script> elements only — those with a src attribute are governed by 'self'.
+ *
+ * The end tag is matched as `</script`, then anything but `>`, then `>`, because that
+ * is what HTML accepts: whitespace before the `>` is legal (`</script >`), and so are
+ * attributes, which an end tag ignores (`</script foo="bar">`). A pattern demanding the
+ * bare `</script>` reads a file HTML does not: it finds no end tag, the whole match
+ * fails, and that script leaves this list — so its hash is never computed and never
+ * compared, and the run comes back green having checked nothing. That is the exact
+ * failure this file exists to prevent, which is why it is worth a line of regexp.
+ * CodeQL js/bad-tag-filter named it here (alert 1, raised 2026-10-28).
+ *
+ * One limit stays, stated rather than fixed: `[^>]` stops at the first `>`, so a `>`
+ * inside a quoted attribute value (`<script data-x="a>b">`) still ends the tag early.
+ * index.html has none, and that shape fails LOUDLY rather than silently — the opening
+ * tag truncates, the body picked up is the wrong string, and its hash is reported as
+ * undeclared. The silent direction is the one closed above.
+ */
+function inlineScriptsIn(source) {
   const out = [];
-  const re = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi;
+  const re = /<script\b([^>]*)>([\s\S]*?)<\/script\b[^>]*>/gi;
   let m;
-  while ((m = re.exec(html)) !== null) {
+  while ((m = re.exec(source)) !== null) {
     if (/\bsrc\s*=/i.test(m[1])) continue;
     out.push(m[2]);
   }
   return out;
 }
+
+function inlineScripts() {
+  return inlineScriptsIn(html);
+}
+
+// The scanner's own guard. Every case below is an end tag a browser treats as closing
+// the script, so a scanner that misses one drops a real inline script from the hash
+// check above and reports clean. The first case is the ordinary form, kept as a control:
+// a scanner that found nothing at all would fail it, so this test cannot pass by
+// returning an empty list.
+test('the inline-script scanner reads every end tag HTML accepts', () => {
+  const cases = [
+    ['control — the ordinary end tag', '<script>PIN</script>'],
+    ['a space before the >', '<script>PIN</script >'],
+    ['a newline before the >', '<script>PIN</script\n>'],
+    ['a tab before the >', '<script>PIN</script\t>'],
+    ['attributes, which an end tag ignores', '<script>PIN</script foo="bar">'],
+    ['uppercase, and a space', '<SCRIPT>PIN</SCRIPT >'],
+  ];
+  for (const [label, markup] of cases) {
+    assert.deepEqual(inlineScriptsIn(`<head>${markup}</head>`), ['PIN'], label);
+  }
+
+  // The src skip still holds — without it every bundle would be hashed as inline.
+  assert.deepEqual(inlineScriptsIn('<script src="/assets/app.js"></script >'), []);
+  // And a tag that merely starts with the word is not a script tag.
+  assert.deepEqual(inlineScriptsIn('<scriptfoo>PIN</scriptfoo>'), []);
+});
 
 test('every inline script has a matching sha256 declared in script-src', () => {
   const csp = cspContent();
