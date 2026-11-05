@@ -1,7 +1,7 @@
 import { defineConfig } from '@playwright/test';
 
 /**
- * PORT 4646 IS THIS LAB'S OWN, AND THAT IS NOT A PREFERENCE.
+ * PORT 4711 IS THIS LAB'S OWN, AND THAT IS NOT A PREFERENCE.
  *
  * Vite's default preview port is 4173, and every lab in this fleet that keeps
  * the default collides with every other. The failure is not a refused bind —
@@ -10,7 +10,7 @@ import { defineConfig } from '@playwright/test';
  * did not produce. A cold run here returned 302 on `/` and 404 on
  * `/crypto-lab-sm9-forge/` because crypto-lab-glass-box owned the port.
  *
- * 4646 was chosen by scanning every sibling `playwright.config.ts` in the fleet
+ * 4711 was chosen by scanning every sibling `playwright.config.ts` in the fleet
  * for a port already claimed. All three places below must name the same port:
  * `baseURL` is what the specs resolve `./` against, `webServer.command` is what
  * actually binds, and `webServer.url` is what Playwright polls before starting.

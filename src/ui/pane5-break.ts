@@ -115,6 +115,20 @@ function buildBreak(report: (performed: boolean) => void): Act {
   const output = el('div', { testid: 'p5a-output' });
   const refusal = el('div', { testid: 'p5a-refusal' });
 
+  /** Retire every recovery and forgery claim derived from the previous text. */
+  function retire(): void {
+    clear(output);
+    clear(refusal);
+    setVerdict(breakVerdict, 'pending', 'pending — nothing has been signed yet');
+    report(false);
+  }
+
+  // A verdict is evidence about all three messages. Native `change` keeps a
+  // no-op edit from destroying it, but a real edit must remove it immediately.
+  for (const input of [message1, message2, message3]) {
+    input.addEventListener('change', retire);
+  }
+
   runButton.addEventListener('click', () => {
     replace(output, [statusPill('info', 'computing')]);
     defer(() => {

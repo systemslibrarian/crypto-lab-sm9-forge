@@ -115,6 +115,23 @@ export function buildPane4(host: ExhibitHost): Exhibit {
   const signVerdict = verdictSlot('p4-sign-verdict', 'pending — the KGC has not derived anything yet');
   const signOut = el('div', { testid: 'p4-sign-output' });
 
+  /** Retire every claim that was computed from the previous identity or text. */
+  function retire(): void {
+    performed.read = false;
+    performed.sign = false;
+    clear(readOut);
+    clear(signOut);
+    setVerdict(readVerdict, 'pending', 'pending — the KGC has not derived anything yet');
+    setVerdict(signVerdict, 'pending', 'pending — the KGC has not derived anything yet');
+    host.onStale();
+  }
+
+  // Native `change`, rather than every keystroke: selecting and re-typing the
+  // same value preserves valid evidence, while leaving either field with a new
+  // value removes every verdict about the old one.
+  identityInput.addEventListener('change', retire);
+  messageInput.addEventListener('change', retire);
+
   readButton.addEventListener('click', () => {
     replace(readOut, [statusPill('info', 'computing')]);
     defer(() => {

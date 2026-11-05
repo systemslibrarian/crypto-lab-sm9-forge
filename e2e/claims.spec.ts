@@ -998,6 +998,61 @@ test.describe('pane 4 — the KGC\'s two powers', () => {
 });
 
 // ---------------------------------------------------------------------------
+// EDITABLE EVIDENCE — no verdict may outlive the input that produced it.
+// ---------------------------------------------------------------------------
+
+test.describe('retirement of editable exhibit evidence', () => {
+  test('changing either KGC input retires both powers and the completed step', async ({ page }) => {
+    await openLab(page);
+
+    for (const [testid, replacement] of [
+      ['p4-identity', 'Carol'],
+      ['p4-message', 'Move the meeting to ten.'],
+    ] as const) {
+      await at(page, 'p4-run-read').click();
+      await expect(at(page, 'p4-read-values')).toHaveCount(1);
+      await at(page, 'p4-run-sign').click();
+      await expect(at(page, 'p4-sign-values')).toHaveCount(1);
+      await expectStatus(page, 'rail-state-kgc', 'ok', /^done$/);
+
+      const input = at(page, testid);
+      await input.fill(replacement);
+      await input.blur();
+
+      await expect(at(page, 'p4-read-values')).toHaveCount(0);
+      await expect(at(page, 'p4-sign-values')).toHaveCount(0);
+      await expectVerdict(page, 'p4-read-verdict', 'pending', /pending/);
+      await expectVerdict(page, 'p4-sign-verdict', 'pending', /pending/);
+      await expect(at(page, 'step-kgc')).toHaveAttribute('data-state', 'locked');
+      await expectStatus(page, 'rail-state-kgc', 'info', /^ready$/);
+    }
+  });
+
+  test('changing any nonce-reuse message retires the recovery and forgery', async ({ page }) => {
+    await openLab(page);
+
+    for (const [testid, replacement] of [
+      ['p5a-msg1', 'Release the build at 10:00.'],
+      ['p5a-msg2', 'Release the build at 18:00.'],
+      ['p5a-msg3', 'Grant no deploy key to this bearer.'],
+    ] as const) {
+      await at(page, 'p5a-run').click();
+      await expect(at(page, 'p5a-forged')).toHaveCount(1);
+      await expectVerdict(page, 'p5a-forged-verdict', 'alarm', /FORGED AND ACCEPTED/);
+
+      const input = at(page, testid);
+      await input.fill(replacement);
+      await input.blur();
+
+      await expect(at(page, 'p5a-forged')).toHaveCount(0);
+      await expect(at(page, 'p5a-output')).toBeEmpty();
+      await expect(at(page, 'p5a-refusal')).toBeEmpty();
+      await expectVerdict(page, 'p5a-forged-verdict', 'pending', /pending/);
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
 // PANE 5 (a) — the break
 // ---------------------------------------------------------------------------
 
