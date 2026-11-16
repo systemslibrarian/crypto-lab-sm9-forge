@@ -1,4 +1,5 @@
 import AxeBuilder from '@axe-core/playwright';
+import { auditControlNames, formatControlNameFailures } from './control-names';
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
 /**
@@ -982,6 +983,11 @@ async function scan(page: Page, label: string, tally: RunTally): Promise<void> {
       + boundaries.failures.map((f) => `  ${f.what} ${f.best}:1 (needs 3:1) from ${f.from} against ${f.against}`).join('\n'),
   ).toEqual([]);
   expect(boundaries.measured, `${label}: the boundary oracle measured no controls at all`).toBeGreaterThan(0);
+
+  // axe's `label` rule accepts a bare `placeholder` as an accessible name, so a
+  // deleted label can leave this gate green. See `control-names.ts`.
+  const unnamed = formatControlNameFailures(await auditControlNames(page));
+  expect(unnamed, `${label}: form controls named only by placeholder/title`).toEqual([]);
 
   await expectNoHorizontalOverflow(page, label);
   await expectTablesAreScrollable(page);
